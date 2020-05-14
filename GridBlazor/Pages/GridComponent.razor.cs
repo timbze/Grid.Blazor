@@ -58,8 +58,8 @@ namespace GridBlazor.Pages
         public event Func<GridUpdateComponent<T>, T, Task> AfterUpdate;
         public event Func<GridDeleteComponent<T>, T, Task> AfterDelete;
 
-        public event Func<Task> BeforeRefreshGrid;
-        public event Func<Task> AfterRefreshGrid;
+        public event Func<GridRefreshEventArgs, Task<bool>> BeforeRefreshGrid;
+        public event Func<GridRefreshEventArgs, Task> AfterRefreshGrid;
 
         public event Func<CheckboxEventArgs<T>, Task> HeaderCheckboxChanged;
         public event Func<CheckboxEventArgs<T>, Task> RowCheckboxChanged;
@@ -1072,34 +1072,48 @@ namespace GridBlazor.Pages
 
         public async Task UpdateGrid(bool ReloadData = true)
         {
-            await OnBeforeRefreshGrid();
-            
-            if (ReloadData) await Grid.UpdateGrid();
-            SelectedRow = -1;
-            SelectedRows.Clear();
-            InitSubGridVars();
+            if (await OnBeforeRefreshGrid(ReloadData) == false) return;
+
+            if (ReloadData)
+            {
+                await Grid.UpdateGrid();
+                SelectedRow = -1;
+                SelectedRows.Clear();
+                InitSubGridVars();
+            }
 
             _shouldRender = true;
             StateHasChanged();
 
             await SetGridFocus();
 
-            await OnAfterRefreshGrid();
+            await OnAfterRefreshGrid(ReloadData);
         }
 
-        protected virtual async Task OnBeforeRefreshGrid()
+        protected virtual async Task<bool> OnBeforeRefreshGrid(bool reloadData)
         {
             if (BeforeRefreshGrid != null)
             {
-                await BeforeRefreshGrid.Invoke();
+                GridRefreshEventArgs args = new GridRefreshEventArgs
+                {
+                    ReloadData = reloadData
+                };
+
+                return await BeforeRefreshGrid.Invoke(args);
             }
+            return true;
         }
 
-        protected virtual async Task OnAfterRefreshGrid()
+        protected virtual async Task OnAfterRefreshGrid(bool reloadData)
         {
             if (AfterRefreshGrid != null)
             {
-                await AfterRefreshGrid.Invoke();
+                GridRefreshEventArgs args = new GridRefreshEventArgs
+                {
+                    ReloadData = reloadData
+                };
+
+                await AfterRefreshGrid.Invoke(args);
             }
         }
     }
