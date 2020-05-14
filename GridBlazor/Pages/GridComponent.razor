@@ -192,7 +192,7 @@
                 <div class="@GridWrapCssClass">
                     <div class="row">
                         <div class="row col-md-6">
-                            @if (Grid.ClearFiltersButtonEnabled)
+                            @if (Grid.ClearFiltersButtonEnabled && Grid.Settings.FilterSettings.FilteredColumns.Any())
                             {
                                 <div class="grid-all-filters-clear">
                                     <button class="grid-button grid-button-all-filters-clear btn btn-default btn-outline-secondary" type="button" title="@Strings.ClearAllFilters" @onclick="RemoveAllFilters" @onclick:stopPropagation></button>
