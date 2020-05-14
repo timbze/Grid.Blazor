@@ -60,6 +60,11 @@ namespace GridBlazor.Pages
 
         public event Func<GridRefreshEventArgs, Task<bool>> BeforeRefreshGrid;
         public event Func<GridRefreshEventArgs, Task> AfterRefreshGrid;
+        /// <summary>
+        /// Get's invoked after grid has been updated, but before StateHasChanged() is called.
+        /// Is not called with ReloadData of UpdateGrid() is passed in as false
+        /// </summary>
+        public event Func<Task> AfterUpdateGrid;
 
         public event Func<CheckboxEventArgs<T>, Task> HeaderCheckboxChanged;
         public event Func<CheckboxEventArgs<T>, Task> RowCheckboxChanged;
@@ -1080,6 +1085,7 @@ namespace GridBlazor.Pages
                 SelectedRow = -1;
                 SelectedRows.Clear();
                 InitSubGridVars();
+                await OnAfterUpdateGrid();
             }
 
             _shouldRender = true;
@@ -1114,6 +1120,14 @@ namespace GridBlazor.Pages
                 };
 
                 await AfterRefreshGrid.Invoke(args);
+            }
+        }
+
+        protected virtual async Task OnAfterUpdateGrid()
+        {
+            if (AfterUpdateGrid != null)
+            {
+                await AfterUpdateGrid.Invoke();
             }
         }
     }
