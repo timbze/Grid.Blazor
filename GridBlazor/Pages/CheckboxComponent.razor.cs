@@ -59,18 +59,7 @@ namespace GridBlazor.Pages
             if (firstRender)
             {
                 GridComponent.HeaderCheckboxChanged += HeaderCheckboxChanged;
-
-                if (RowId + 1 == GridComponent.Grid.DisplayingItemsCount)
-                {
-                    CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
-                    {
-                        ColumnName = _columnName,
-                        Value = CheckboxValue.Checked,
-                        Item = Item,
-                        RowId = RowId
-                    };
-                    await GridComponent.OnRowCheckboxChanged(args);
-                }
+                await Task.CompletedTask;
             }
         }
 
