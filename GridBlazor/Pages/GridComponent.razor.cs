@@ -58,10 +58,17 @@ namespace GridBlazor.Pages
         public event Func<GridUpdateComponent<T>, T, Task> AfterUpdate;
         public event Func<GridDeleteComponent<T>, T, Task> AfterDelete;
 
+        /// <summary>
+        /// Is invoked before any changes on grid component. Return true to
+        /// go ahead and update grid, or false to cancel
+        /// </summary>
         public event Func<GridRefreshEventArgs, Task<bool>> BeforeRefreshGrid;
+        /// <summary>
+        /// Is invoked after grid has been updated and StateHasChanged() has been called.
+        /// </summary>
         public event Func<GridRefreshEventArgs, Task> AfterRefreshGrid;
         /// <summary>
-        /// Get's invoked after grid has been updated, but before StateHasChanged() is called.
+        /// Is invoked after grid has been updated, but before StateHasChanged() is called.
         /// Is not called with ReloadData of UpdateGrid() is passed in as false
         /// </summary>
         public event Func<Task> AfterUpdateGrid;
