@@ -54,12 +54,11 @@ namespace GridBlazor.Pages
             }
         }
 
-        protected override async Task OnAfterRenderAsync(bool firstRender)
+        protected override void OnAfterRender(bool firstRender)
         {
             if (firstRender)
             {
                 GridComponent.HeaderCheckboxChanged += HeaderCheckboxChanged;
-                await Task.CompletedTask;
             }
         }
 
