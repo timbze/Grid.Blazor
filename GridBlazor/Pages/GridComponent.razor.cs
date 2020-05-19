@@ -85,7 +85,10 @@ namespace GridBlazor.Pages
 
         internal List<int> SelectedRows { get; set; } = new List<int>();
 
+        [Obsolete("This property is obsolete. Use the new Checkboxes parameter.", true)]
         public QueryDictionary<List<int>> CheckedRows { get; internal set; } = new QueryDictionary<List<int>>();
+
+        public QueryDictionary<Dictionary<int, CheckboxComponent<T>>> Checkboxes { get; internal set; }
 
         internal ICGridColumn FirstColumn { get; set; }
 
@@ -198,7 +201,7 @@ namespace GridBlazor.Pages
                 && (FirstColumn.IsSumEnabled || FirstColumn.IsAverageEnabled
                     || FirstColumn.IsMaxEnabled || FirstColumn.IsMinEnabled);
 
-            InitSubGridVars();
+            InitCheckboxAndSubGridVars();
 
             var queryBuilder = new CustomQueryStringBuilder(Grid.Settings.SearchSettings.Query);
             var exceptQueryParameters = new List<string> { GridPager.DefaultPageSizeQueryParameter };
@@ -208,8 +211,9 @@ namespace GridBlazor.Pages
             _shouldRender = true;
         }
 
-        private void InitSubGridVars()
+        private void InitCheckboxAndSubGridVars()
         {
+            Checkboxes = new QueryDictionary<Dictionary<int, CheckboxComponent<T>>>();
             if (_hasSubGrid)
             {
                 IsSubGridVisible = new bool[Grid.Pager.PageSize];
@@ -1088,7 +1092,7 @@ namespace GridBlazor.Pages
                 await Grid.UpdateGrid();
                 SelectedRow = -1;
                 SelectedRows.Clear();
-                InitSubGridVars();
+                InitCheckboxAndSubGridVars();
                 await OnAfterUpdateGrid();
             }
 
