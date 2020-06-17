@@ -1,5 +1,4 @@
-﻿using GridBlazor.Columns;
-using GridBlazor.Filtering;
+﻿using GridBlazor.Filtering;
 using GridBlazor.Pagination;
 using GridBlazor.Sorting;
 using GridShared.Columns;
@@ -26,12 +25,14 @@ namespace GridBlazor.Pages
         private const string FilterButtonCss = "grid-filter-btn";
 
         private int _sequence = 0;
-        protected bool _isVisible = false;
+        protected bool _isFilterVisible = false;
+        protected bool _isTooltipVisible = false;
         protected List<ColumnFilterValue> _filterSettings;
         private bool _isColumnFiltered;
         protected string _url;
         protected StringValues _clearInitFilter;
-        private bool _allChecked = false;
+        private bool? _allChecked = null;
+        private bool _showAllChecked = false;
 
         protected string _cssStyles;
         protected string _cssClass;
@@ -108,7 +109,11 @@ namespace GridBlazor.Pages
             }
             _cssSortingClass = string.Join(" ", cssSortingClass);
 
-            FilterWidgetRender = CreateFilterWidgetComponent();
+            if (Column.FilterEnabled)
+                FilterWidgetRender = CreateFilterWidgetComponent();
+
+            if(!string.IsNullOrWhiteSpace(Column.Name))
+                GridComponent.HeaderComponents.AddParameter(Column.Name, this);
         }
 
         private RenderFragment CreateFilterWidgetComponent() => builder =>
@@ -131,7 +136,7 @@ namespace GridBlazor.Pages
             {
                 builder.OpenComponent<TextFilterComponent<T>>(++_sequence);
             }
-            builder.AddAttribute(++_sequence, "Visible", _isVisible);
+            builder.AddAttribute(++_sequence, "Visible", _isFilterVisible);
             builder.AddAttribute(++_sequence, "ColumnName", Column.Name);
             builder.AddAttribute(++_sequence, "FilterSettings", _filterSettings);
             builder.CloseComponent();
@@ -170,26 +175,46 @@ namespace GridBlazor.Pages
 
         public async Task FilterIconClicked()
         {
-            var isVisible = _isVisible;
+            var isVisible = _isFilterVisible;
             GridComponent.FilterIconClicked();
 
             //switch visibility for the filter dialog:
-            _isVisible = !isVisible;
+            _isFilterVisible = !isVisible;
                 
             StateHasChanged();
             await GridComponent.SetGridFocus();
         }
 
+        public async Task DisplayTooltip()
+        {
+            if (!string.IsNullOrWhiteSpace(Column.TooltipValue))
+            {
+                _isTooltipVisible = true;
+                StateHasChanged();
+                await GridComponent.SetGridFocus();
+            }
+        }
+
+        public async Task HideTooltip()
+        {
+            if (!string.IsNullOrWhiteSpace(Column.TooltipValue))
+            {
+                _isTooltipVisible = false;
+                StateHasChanged();
+                await GridComponent.SetGridFocus();
+            }
+        }
+
         public async Task AddFilter(FilterCollection filters)
         {
-            _isVisible = !_isVisible;
+            _isFilterVisible = !_isFilterVisible;
             StateHasChanged();
             await GridComponent.AddFilter(Column, filters);
         }
 
         public async Task RemoveFilter()
         {
-            _isVisible = !_isVisible;
+            _isFilterVisible = !_isFilterVisible;
             StateHasChanged();
             await GridComponent.RemoveFilter(Column);
         }
@@ -203,9 +228,9 @@ namespace GridBlazor.Pages
 
         private void HideFilter()
         {
-            if (_isVisible)
+            if (_isFilterVisible)
             {
-                _isVisible = false;
+                _isFilterVisible = false;
                 StateHasChanged();
             }
         }
@@ -214,7 +239,10 @@ namespace GridBlazor.Pages
         {        
             if (Column.HeaderCheckbox)
             {
-                await SetChecked(!_allChecked);
+                if(_allChecked.HasValue)
+                    await SetChecked(!_allChecked.Value);
+                else
+                    await SetChecked(true);
             }
         }
 
@@ -222,30 +250,42 @@ namespace GridBlazor.Pages
         {
             if (e.ColumnName == Column.Name)
             {
-                SetHeaderCheckbox();
+                if (Column.HeaderCheckbox)
+                {
+                    if (GridComponent.ExceptCheckedRows.Get(Column.Name).Values.Where(r => r == true).Count() 
+                        == GridComponent.Grid.ItemsCount
+                        || (_allChecked == true &&
+                            GridComponent.ExceptCheckedRows.Get(Column.Name).Values.Where(r => r == false).Count() == 0))
+                    {
+                        _allChecked = true;
+                        _showAllChecked = true;
+                        GridComponent.ExceptCheckedRows.AddParameter(Column.Name, new QueryDictionary<bool>());
+                    }
+                    else if (GridComponent.ExceptCheckedRows.Get(Column.Name).Values.Where(r => r == false).Count()
+                        == GridComponent.Grid.ItemsCount
+                        || (_allChecked == false &&
+                            GridComponent.ExceptCheckedRows.Get(Column.Name).Values.Where(r => r == true).Count() == 0))
+                    {
+                        _allChecked = false;
+                        _showAllChecked = true;
+                        GridComponent.ExceptCheckedRows.AddParameter(Column.Name, new QueryDictionary<bool>());
+                    }
+                    else
+                    {
+                        _showAllChecked = false;
+                    }
+                }
+                else
+                {
+                    _allChecked = null;
+                    _showAllChecked = false;
+                }
                 StateHasChanged();
                 await Task.CompletedTask;
             }
         }
 
-        private void SetHeaderCheckbox()
-        {
-            if (Column.HeaderCheckbox)
-            {
-                // add an empty list if column is not in the dictionary
-                if (GridComponent.Checkboxes.Get(Column.Name) == null)
-                    GridComponent.Checkboxes.Add(Column.Name, new Dictionary<int, CheckboxComponent<T>>());
-
-                _allChecked = GridComponent.Checkboxes.Get(Column.Name).Values.Where(r => r.IsChecked()).Count()
-                    == GridComponent.Grid.DisplayingItemsCount;
-            }
-            else
-            {
-                _allChecked = false;
-            }
-        }
-
-        public bool IsChecked()
+        public bool? IsChecked()
         {
             return _allChecked;
         }
@@ -254,12 +294,16 @@ namespace GridBlazor.Pages
         {
             if (Column.HeaderCheckbox)
             {
+                // set a value and init ExceptCheckedRows for this column
                 _allChecked = value;
+                _showAllChecked = true;
+                GridComponent.ExceptCheckedRows.AddParameter(Column.Name, new QueryDictionary<bool>());
+
                 CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
                 {
                     ColumnName = Column.Name
                 };
-                if (_allChecked)
+                if (value)
                 {
                     args.Value = CheckboxValue.Checked;
                 }

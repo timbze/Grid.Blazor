@@ -14,9 +14,23 @@
             && column.CreateComponentType == null && column.ReadComponentType == null
             && column.UpdateComponentType == null && column.DeleteComponentType == null)
         {
+            if (column.FieldName == null)
+            {
+                continue;
+            }
+
             (Type type, object value) = ((IGridColumn<T>)column).GetTypeAndValue(Item);
             <div class="form-group row" style="@(column.CrudHidden.HasFlag(CrudHidden.READ)?"display:none;":"")">
-                <label for="@column.FieldName" class="col-form-label col-md-2">@column.Title</label>
+                @if (!string.IsNullOrWhiteSpace(column.TooltipValue))
+                {
+                    <div class="col-md-2">
+                        <FormTooltipComponent Column="@column"></FormTooltipComponent>
+                    </div>
+                }
+                else
+                {
+                    <label for="@column.FieldName" class="col-form-label col-md-2">@column.Title</label>
+                }
                 <div class="@(type == typeof(bool)?"col-md-1":"col-md-5")">
                     @if (((IGridColumn<T>)column).IsSelectField.IsSelectKey)
                     {
@@ -71,7 +85,16 @@
             && string.IsNullOrWhiteSpace(column.TabGroup))
         {
             <div class="form-group row" style="@(column.CrudHidden.HasFlag(CrudHidden.READ)?"display:none;":"")">
-                <label for="@column.FieldName" class="col-form-label col-md-2">@column.Title</label>
+                @if (!string.IsNullOrWhiteSpace(column.TooltipValue))
+                {
+                    <div class="col-md-2">
+                        <FormTooltipComponent Column="@column"></FormTooltipComponent>
+                    </div>
+                }
+                else
+                {
+                    <label class="col-form-label col-md-2">@column.Title</label>
+                }
                 <div class="col-md-10">
                     <div class="card panel panel-default">
                         <div class="card-body panel-body">@_renderFragments.Get(column.Name)</div>
