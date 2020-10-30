@@ -255,4 +255,28 @@
   <data name="IsNull" xml:space="preserve">
     <value>Нулевой</value>
   </data>
+  <data name="SelectionDeleteError" xml:space="preserve">
+    <value>Вы должны выбрать строку, которую хотите удалить</value>
+  </data>
+  <data name="SelectionReadError" xml:space="preserve">
+    <value>Вы должны выбрать строку, которую хотите просмотреть</value>
+  </data>
+  <data name="SelectionUpdateError" xml:space="preserve">
+    <value>Вы должны выбрать строку, которую хотите редактировать</value>
+  </data>
+  <data name="Files" xml:space="preserve">
+    <value>Файлы</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Код</value>
+  </data>
+  <data name="Confirm Code" xml:space="preserve">
+    <value>Подтвердить Код</value>
+  </data>
+  <data name="ConfirmCodeError" xml:space="preserve">
+    <value>Код кода и подтверждения должен быть равным, чтобы сохранить этот элемент</value>
+  </data>
+  <data name="DeleteConfirmCodeError" xml:space="preserve">
+    <value>Код кода и код подтверждения должны быть равны для удаления этого элемента</value>
+  </data>
 </root>

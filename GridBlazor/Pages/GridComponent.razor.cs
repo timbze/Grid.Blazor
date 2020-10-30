@@ -1,9 +1,11 @@
 using GridBlazor.Pagination;
+using GridBlazor.Resources;
 using GridBlazor.Searching;
 using GridShared;
 using GridShared.Columns;
 using GridShared.Events;
 using GridShared.Filtering;
+using GridShared.OData;
 using GridShared.Pagination;
 using GridShared.Sorting;
 using GridShared.Utility;
@@ -14,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GridBlazor.Pages
@@ -38,9 +41,10 @@ namespace GridBlazor.Pages
         internal bool _isWeekSupported = false;
         internal bool _isMonthSupported = false;
 
-        protected ElementReference gridmvc;
-        public ElementReference PageSizeInput;
-        public GridSearchComponent<T> SearchComponent;
+        // CRUD buttons on the header
+        internal bool HeaderCrudButtons = false;
+
+        internal ElementReference Gridmvc;
 
         public event Func<object, SortEventArgs, Task> SortChanged;
         public event Func<object, ExtSortEventArgs, Task> ExtSortChanged;
@@ -80,24 +84,41 @@ namespace GridBlazor.Pages
         [Inject]
         private IJSRuntime jSRuntime { get; set; }
 
-        internal int SelectedRow { get; set; } = -1;
+        public int SelectedRow { get; internal set; } = -1;
 
-        internal List<int> SelectedRows { get; set; } = new List<int>();
+        public List<int> SelectedRows { get; internal set; } = new List<int>();
 
         [Obsolete("This property is obsolete. Use the new Checkboxes parameter.", true)]
         public QueryDictionary<List<int>> CheckedRows { get; internal set; } = new QueryDictionary<List<int>>();
 
-        public QueryDictionary<Dictionary<int, CheckboxComponent<T>>> Checkboxes { get; internal set; }
+        public QueryDictionary<Dictionary<int, CheckboxComponent<T>>> Checkboxes { get; private set; }
 
-        public QueryDictionary<QueryDictionary<bool>> ExceptCheckedRows { get; internal set; } = new QueryDictionary<QueryDictionary<bool>>();
+        public QueryDictionary<QueryDictionary<bool>> ExceptCheckedRows { get; private set; } = new QueryDictionary<QueryDictionary<bool>>();
 
-        public QueryDictionary<GridHeaderComponent<T>> HeaderComponents { get; internal set; }
+        public QueryDictionary<GridHeaderComponent<T>> HeaderComponents { get; private set; }
+
+        public ElementReference PageSizeInput { get; private set; }
+
+        public GridSearchComponent<T> SearchComponent { get; private set; }
+
+        public GridCreateComponent<T> CreateComponent { get; private set; }
+
+        public GridReadComponent<T> ReadComponent { get; private set; }
+
+        public GridUpdateComponent<T> UpdateComponent { get; private set; }
+
+        public GridDeleteComponent<T> DeleteComponent { get; private set; }
 
         internal IGridColumn<T> FirstColumn { get; set; }
 
         internal ColumnOrderValue Payload { get; set; }
 
         protected RenderFragment CrudRender { get; set; }
+
+        public string Error { 
+            get { return Grid.Error; } 
+            set { Grid.Error = value; } 
+        }
 
         [Parameter]
         public ICGrid Grid { get; set; }
@@ -131,11 +152,15 @@ namespace GridBlazor.Pages
 
         [Parameter]
         public string TableCssClass { get; set; } = "table grid-table";
+
         [Parameter]
         public string TableWrapCssClass { get; set; } = "table-wrap";
 
         [Parameter]
         public string GridHeaderCssClass { get; set; } = "grid-header";
+
+        [Parameter]
+        public string GridCrudHeaderCssClass { get; set; } = "grid-crud-header";
 
         [Parameter]
         public string GridCellCssClass { get; set; } = "grid-cell";
@@ -204,6 +229,10 @@ namespace GridBlazor.Pages
                 && (FirstColumn.IsSumEnabled || FirstColumn.IsAverageEnabled
                     || FirstColumn.IsMaxEnabled || FirstColumn.IsMinEnabled);
 
+            HeaderCrudButtons = Grid.HeaderCrudButtons
+                && Grid.ComponentOptions.Selectable
+                && !Grid.ComponentOptions.MultiSelectable;
+
             HeaderComponents = new QueryDictionary<GridHeaderComponent<T>>();
 
             InitCheckboxAndSubGridVars();
@@ -258,10 +287,10 @@ namespace GridBlazor.Pages
                 _isMonthSupported = await jSRuntime.InvokeAsync<bool>("gridJsFunctions.isMonthSupported");
             }
             
-            if ((firstRender || _fromCrud) && gridmvc.Id != null && Grid.Keyboard)
+            if ((firstRender || _fromCrud) && Gridmvc.Id != null && Grid.Keyboard)
             {
                 _fromCrud = false;
-                await SetFocus(gridmvc);
+                await SetFocus(Gridmvc);
             }
 
             if (Grid.ComponentOptions.Selectable && Grid.ComponentOptions.InitSelection
@@ -288,6 +317,9 @@ namespace GridBlazor.Pages
             }
 
             _shouldRender = false;
+
+            if(((CGrid<T>)Grid).OnAfterRender != null)
+                await ((CGrid<T>)Grid).OnAfterRender.Invoke(this, firstRender);
         }
 
         private async Task GoToCrudView()
@@ -301,7 +333,7 @@ namespace GridBlazor.Pages
                 else if (Mode == GridMode.Read)
                 {
                     var item = await ((CGrid<T>)Grid).CrudDataService.Get(Keys);
-                    ReadHandler(item);
+                    await ReadHandler(item);
                 }
                 else if (Mode == GridMode.Update)
                 {
@@ -310,7 +342,7 @@ namespace GridBlazor.Pages
                 else if (Mode == GridMode.Delete)
                 {
                     var item = await ((CGrid<T>)Grid).CrudDataService.Get(Keys);
-                    DeleteHandler(item);
+                    await DeleteHandler(item);
                 }
             }
         }
@@ -459,7 +491,8 @@ namespace GridBlazor.Pages
         
         protected virtual async Task OnFilterChanged()
         {
-            InitCheckedKeys();
+            // Filter changes must not init checked keys
+            //InitCheckedKeys();
 
             FilterEventArgs args = new FilterEventArgs();
             args.FilteredColumns = Grid.Settings.FilterSettings.FilteredColumns;
@@ -501,7 +534,8 @@ namespace GridBlazor.Pages
 
         protected virtual async Task OnSearchChanged()
         {
-            InitCheckedKeys();
+            // Filter changes must not init checked keys
+            //InitCheckedKeys();
 
             SearchEventArgs args = new SearchEventArgs();
             args.SearchValue = Grid.Settings.SearchSettings.SearchValue;
@@ -569,6 +603,18 @@ namespace GridBlazor.Pages
         {
             await SetSelectFields();
             _item = (T)Activator.CreateInstance(typeof(T));
+            CreateHndlr();
+        }
+
+        public async Task CreateHandler(T item)
+        {
+            await SetSelectFields();
+            _item = item;
+            CreateHndlr();
+        }
+
+        private void CreateHndlr()
+        {
             if (Grid.FixedValues != null)
             {
                 foreach (var fixValue in Grid.FixedValues)
@@ -586,15 +632,57 @@ namespace GridBlazor.Pages
             StateHasChanged();
         }
 
-        public void ReadHandler(object item)
+        public async Task ReadHandler(object item)
         {
-            _item = (T)item;
-            ((CGrid<T>)Grid).Mode = GridMode.Read;
-            if (Grid.ReadComponent != null)
-                CrudRender = ReadCrudComponent();
-            else
-                CrudRender = null;
+            var keys = Grid.GetPrimaryKeyValues(item);
+            await ReadHandler(keys);
+        }
 
+        public async Task ReadHandler(object[] keys)
+        {
+            try
+            {
+                _item = await ((CGrid<T>)Grid).CrudDataService.Get(keys);
+                ((CGrid<T>)Grid).Mode = GridMode.Read;
+                if (Grid.ReadComponent != null)
+                    CrudRender = ReadCrudComponent();
+                else
+                    CrudRender = null;
+
+                _shouldRender = true;
+                StateHasChanged();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                ((CGrid<T>)Grid).Mode = GridMode.Grid;
+                throw;
+            }
+        }
+
+        public async Task ReadSelectedHandler()
+        {
+            if (SelectedRow != -1)
+            {
+                var item = Grid.ItemsToDisplay.ElementAt(SelectedRow);
+                await ReadHandler(item);
+            }
+            else
+                ShowError(Strings.SelectionReadError);
+        }
+
+        public void ShowError(string error)
+        {
+            Error = error;
+            var timer = new Timer((_) => {
+                InvokeAsync(OnTimerEvent);
+            }, null, 3000, -1);
+            _shouldRender = true;
+        }
+
+        private void OnTimerEvent()
+        {
+            Error = "";
             _shouldRender = true;
             StateHasChanged();
         }
@@ -627,12 +715,83 @@ namespace GridBlazor.Pages
                 throw;
             }
         }
-        public void DeleteHandler(object item)
+
+        public async Task UpdateSelectedHandler()
         {
-            _item = (T)item;
-            ((CGrid<T>)Grid).Mode = GridMode.Delete;
-            if (Grid.DeleteComponent != null)
-                CrudRender = DeleteCrudComponent();
+            if (SelectedRow != -1)
+            {
+                var item = Grid.ItemsToDisplay.ElementAt(SelectedRow);
+                await UpdateHandler(item);
+            }
+            else
+                ShowError(Strings.SelectionUpdateError);
+        }
+
+        public async Task DeleteHandler(object item)
+        {
+            var keys = Grid.GetPrimaryKeyValues(item);
+            await DeleteHandler(keys);
+        }
+        public async Task DeleteHandler(object[] keys)
+        {
+            try
+            {
+                _item = await ((CGrid<T>)Grid).CrudDataService.Get(keys);
+                ((CGrid<T>)Grid).Mode = GridMode.Delete;
+                if (Grid.DeleteComponent != null)
+                    CrudRender = DeleteCrudComponent();
+                else
+                    CrudRender = null;
+
+                _shouldRender = true;
+                StateHasChanged();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                ((CGrid<T>)Grid).Mode = GridMode.Grid;
+                throw;
+            }
+        }
+
+        public async Task DeleteSelectedHandler()
+        {
+            if (SelectedRow != -1)
+            {
+                var item = Grid.ItemsToDisplay.ElementAt(SelectedRow);
+                await DeleteHandler(item);
+            }
+            else
+                ShowError(Strings.SelectionDeleteError);
+        }
+
+        public async Task ExcelHandler()
+        {
+            if(string.IsNullOrWhiteSpace(Grid.ExcelExportFileName))
+                await Grid.DownloadExcel(jSRuntime, Grid.ComponentOptions.GridName + ".xlsx");
+            else
+                await Grid.DownloadExcel(jSRuntime, Grid.ExcelExportFileName + ".xlsx");
+        }
+
+        public void ButtonComponentHandler(string key)
+        {
+            var buttonComponent = Grid.ButtonComponents.Get(key);
+            StartFormComponent(buttonComponent.Label, buttonComponent.ComponentType, buttonComponent.Actions,
+                    buttonComponent.Functions, buttonComponent.Object);
+        }
+
+        public void StartFormComponent<TFormComponent>(string label, IList<Action<object>> actions,
+            IList<Func<object, Task>> functions, object obj)
+        {
+            StartFormComponent(label, typeof(TFormComponent), actions, functions, obj);
+        }
+
+        public void StartFormComponent(string label, Type componentType, IList<Action<object>> actions, 
+            IList<Func<object, Task>> functions, object obj)
+        {
+            ((CGrid<T>)Grid).Mode = GridMode.Form;
+            if (componentType != null)
+                CrudRender = FormComponent(label, componentType, actions, functions, obj);
             else
                 CrudRender = null;
 
@@ -640,18 +799,26 @@ namespace GridBlazor.Pages
             StateHasChanged();
         }
 
-        public async Task ExcelHandler()
+        public void ButtonCrudComponentHandler(string key)
         {
-            await Grid.DownloadExcel(jSRuntime, Grid.ComponentOptions.GridName + ".xlsx");
+            var buttonComponent = ((CGrid<T>)Grid).ButtonCrudComponents.Get(key);
+            StartFormCrudComponent(buttonComponent.Label, buttonComponent.ComponentType, buttonComponent.Actions,
+                    buttonComponent.Functions, buttonComponent.Object);
         }
 
-        public void ButtonComponentHandler(string key)
+        public void StartFormCrudComponent<TFormComponent>(string label, IList<Action<object>> actions,
+            IList<Func<object, Task>> functions, object obj)
         {
-            var buttonComponent = Grid.ButtonComponents.Get(key);
-            ((CGrid<T>)Grid).Mode = GridMode.ButtonComponent;
-            if (buttonComponent.ComponentType != null)
-                CrudRender = ButtonComponent(buttonComponent.Label, buttonComponent.ComponentType, buttonComponent.Actions,
-                    buttonComponent.Functions, buttonComponent.Object);
+            StartFormCrudComponent(label, typeof(TFormComponent), actions, functions, obj);
+        }
+
+        public void StartFormCrudComponent(string label, Type componentType, IList<Action<object>> actions,
+            IList<Func<object, Task>> functions, object obj)
+        {
+            var returnMode = ((CGrid<T>)Grid).Mode;
+            ((CGrid<T>)Grid).Mode = GridMode.Form;
+            if (componentType != null)
+                CrudRender = FormCrudComponent(label, componentType, returnMode, actions, functions, obj);
             else
                 CrudRender = null;
 
@@ -807,18 +974,18 @@ namespace GridBlazor.Pages
             builder.CloseComponent();
         };
 
-        protected RenderFragment ButtonComponent(string label, Type componentType, IList<Action<object>> actions, 
+        protected RenderFragment FormComponent(string label, Type componentType, IList<Action<object>> actions, 
             IList<Func<object, Task>> functions, object obj) => builder =>
         {
             builder.OpenComponent<CascadingValue<GridComponent<T>>>(++_sequence);
             builder.AddAttribute(++_sequence, "Value", this);
             builder.AddAttribute(++_sequence, "Name", "GridComponent");
-            builder.AddAttribute(++_sequence, "ChildContent", ButtonChildComponent(label, componentType, actions,
+            builder.AddAttribute(++_sequence, "ChildContent", FormChildComponent(label, componentType, actions,
                 functions, obj));
             builder.CloseComponent();
         };
 
-        private RenderFragment ButtonChildComponent(string label, Type componentType, IList<Action<object>> actions,
+        private RenderFragment FormChildComponent(string label, Type componentType, IList<Action<object>> actions,
             IList<Func<object, Task>> functions, object obj) => builder =>
         {
             builder.OpenComponent(++_sequence, componentType);
@@ -840,6 +1007,45 @@ namespace GridBlazor.Pages
             builder.CloseComponent();
         };
 
+        protected RenderFragment FormCrudComponent(string label, Type componentType, GridMode returnMode, 
+            IList<Action<object>> actions, IList<Func<object, Task>> functions, object obj) => builder =>
+            {
+                builder.OpenComponent<CascadingValue<GridComponent<T>>>(++_sequence);
+                builder.AddAttribute(++_sequence, "Value", this);
+                builder.AddAttribute(++_sequence, "Name", "GridComponent");
+                builder.AddAttribute(++_sequence, "ChildContent", FormCrudChildComponent(label, componentType, returnMode,
+                    actions, functions, obj));
+                builder.CloseComponent();
+            };
+
+        private RenderFragment FormCrudChildComponent(string label, Type componentType, GridMode returnMode,
+            IList<Action<object>> actions, IList<Func<object, Task>> functions, object obj) => builder =>
+            {
+                builder.OpenComponent(++_sequence, componentType);
+                var gridProperty = componentType.GetProperty("Grid");
+                if (gridProperty != null && gridProperty.PropertyType == typeof(CGrid<T>))
+                    builder.AddAttribute(++_sequence, "Grid", (CGrid<T>)Grid);
+                gridProperty = componentType.GetProperty("Label");
+                if (gridProperty != null)
+                    builder.AddAttribute(++_sequence, "Label", label);
+                gridProperty = componentType.GetProperty("Actions");
+                if (gridProperty != null)
+                    builder.AddAttribute(++_sequence, "Actions", actions);
+                gridProperty = componentType.GetProperty("Functions");
+                if (gridProperty != null)
+                    builder.AddAttribute(++_sequence, "Functions", functions);
+                gridProperty = componentType.GetProperty("Object");
+                if (gridProperty != null)
+                    builder.AddAttribute(++_sequence, "Object", obj);
+                gridProperty = componentType.GetProperty("ReturnMode");
+                if (gridProperty != null)
+                    builder.AddAttribute(++_sequence, "ReturnMode", returnMode);
+                gridProperty = componentType.GetProperty("Item");
+                if (gridProperty != null)
+                    builder.AddAttribute(++_sequence, "Item", _item);
+                builder.CloseComponent();
+            };
+
         public void BackButton()
         {
             ((CGrid<T>)Grid).Mode = GridMode.Grid;
@@ -857,12 +1063,24 @@ namespace GridBlazor.Pages
                 bool isValid = await OnBeforeInsert(component);
                 if (isValid)
                 {
-                    await ((CGrid<T>)Grid).CrudDataService.Insert(_item);
+                    if (Grid.ServerAPI == ServerAPI.OData)
+                        _item = await ((ICrudODataService<T>)((CGrid<T>)Grid).CrudDataService).Add(_item);
+                    else
+                        await ((CGrid<T>)Grid).CrudDataService.Insert(_item);
+                    if(((CGrid<T>)Grid).CrudFileService != null)
+                        await ((CGrid<T>)Grid).CrudFileService.InsertFiles(_item, component.Files);
                     await OnAfterInsert(component);
-                    ((CGrid<T>)Grid).Mode = GridMode.Grid;
                     CrudRender = null;
-                    _fromCrud = true;
-                    await UpdateGrid();
+                    if (Grid.EditAfterInsert)
+                    {
+                        await UpdateHandler(_item);
+                    }
+                    else
+                    {
+                        ((CGrid<T>)Grid).Mode = GridMode.Grid;
+                        _fromCrud = true;
+                        await UpdateGrid();
+                    }
                 }     
             }
             catch (Exception e)
@@ -896,6 +1114,8 @@ namespace GridBlazor.Pages
                 bool isValid = await OnBeforeUpdate(component);
                 if (isValid)
                 {
+                    if (((CGrid<T>)Grid).CrudFileService != null)
+                        _item = await((CGrid<T>)Grid).CrudFileService.UpdateFiles(_item, component.Files);
                     await ((CGrid<T>)Grid).CrudDataService.Update(_item);
                     await OnAfterUpdate(component);
                     ((CGrid<T>)Grid).Mode = GridMode.Grid;
@@ -936,6 +1156,8 @@ namespace GridBlazor.Pages
                 if (isValid)
                 {
                     var keys = Grid.GetPrimaryKeyValues(_item);
+                    if (((CGrid<T>)Grid).CrudFileService != null)
+                        await ((CGrid<T>)Grid).CrudFileService.DeleteFiles(keys);
                     await ((CGrid<T>)Grid).CrudDataService.Delete(keys);
                     await OnAfterDelete(component);
                     ((CGrid<T>)Grid).Mode = GridMode.Grid;
@@ -1007,9 +1229,9 @@ namespace GridBlazor.Pages
 
         public async Task SetGridFocus()
         {
-            if (gridmvc.Id != null && Grid.Keyboard)
+            if (Gridmvc.Id != null && Grid.Keyboard)
             {
-                await SetFocus(gridmvc);
+                await SetFocus(Gridmvc);
             }
         }
 

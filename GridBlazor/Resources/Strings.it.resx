@@ -255,4 +255,28 @@
   <data name="IsNull" xml:space="preserve">
     <value>È nulla</value>
   </data>
+  <data name="SelectionDeleteError" xml:space="preserve">
+    <value>Devi selezionare la riga che desideri eliminare</value>
+  </data>
+  <data name="SelectionReadError" xml:space="preserve">
+    <value>Devi selezionare la riga che desideri visualizzare</value>
+  </data>
+  <data name="SelectionUpdateError" xml:space="preserve">
+    <value>Devi selezionare la riga che desideri modificare</value>
+  </data>
+  <data name="Files" xml:space="preserve">
+    <value>Archivi</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Codice</value>
+  </data>
+  <data name="Confirm Code" xml:space="preserve">
+    <value>Conferma Codice</value>
+  </data>
+  <data name="ConfirmCodeError" xml:space="preserve">
+    <value>Il codice e il codice di conferma devono essere uguali per salvare questo elemento</value>
+  </data>
+  <data name="DeleteConfirmCodeError" xml:space="preserve">
+    <value>Il codice e il codice di conferma devono essere uguali per eliminare questo elemento</value>
+  </data>
 </root>

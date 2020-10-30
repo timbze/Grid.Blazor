@@ -31,6 +31,13 @@
         <script src="~/js/gridmvc-lang-tr.js"></script>
         <script src="~/js/gridmvc-lang-cs.js"></script>
         <script src="~/js/gridmvc-lang-sl.js"></script>
+        <script src="~/js/gridmvc-lang-sr.js"></script>
+        <script src="~/js/gridmvc-lang-hr.js"></script>
+        <script src="~/js/gridmvc-lang-fa.js"></script>
+        <script src="~/js/gridmvc-lang-ca.js"></script>
+        <script src="~/js/gridmvc-lang-eu.js"></script>
+        <script src="~/js/gridmvc-lang-gl.js"></script>
+        <script src="~/js/gridmvc-lang-pt.js"></script>
         <script src="~/js/gridmvc.customwidgets.js" type="text/javascript"></script>
         <!-- referencing datepicker control -->
         <script src="~/lib/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
@@ -44,6 +51,13 @@
         <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.tr.min.js"></script>
         <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.cs.min.js"></script>
         <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.sl.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.sr.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.hr.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.fa.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.ca.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.gl.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.eu.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.pt.min.js"></script>
         <script src="~/js/site.js"></script>
     </environment>
     <environment names="Staging,Production">
@@ -59,6 +73,13 @@
         <script src="~/js/gridmvc-lang-tr.js"></script>
         <script src="~/js/gridmvc-lang-cs.js"></script>
         <script src="~/js/gridmvc-lang-sl.js"></script>
+        <script src="~/js/gridmvc-lang-sr.js"></script>
+        <script src="~/js/gridmvc-lang-hr.js"></script>
+        <script src="~/js/gridmvc-lang-fa.js"></script>
+        <script src="~/js/gridmvc-lang-ca.js"></script>
+        <script src="~/js/gridmvc-lang-eu.js"></script>
+        <script src="~/js/gridmvc-lang-gl.js"></script>
+        <script src="~/js/gridmvc-lang-pt.js"></script>
         <script src="~/js/gridmvc.customwidgets.js" type="text/javascript"></script>
         <!-- referencing datepicker control -->
         <script src="~/lib/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
@@ -70,13 +91,19 @@
         <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.tr.min.js"></script>
         <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.cs.min.js"></script>
         <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.sl.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.sr.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.hr.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.ca.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.gl.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.eu.min.js"></script>
+        <script src="~/lib/bootstrap-datepicker/locales/bootstrap-datepicker.pt.min.js"></script>
         <script src="~/js/site.min.js"></script>
     </environment>
 </head>
 <body>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-dark box-shadow mb-3">
         <h2>GridMvc</h2>
-        <div class="container">
+        <div class="container-fluid">
             <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
@@ -84,6 +111,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" style="color:white;" asp-area="" asp-controller="Home" asp-action="Subgrid">Subgrid</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" style="color:white;" asp-area="" asp-controller="Home" asp-action="RTL">RTL</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" style="color:white;" asp-area="" asp-controller="Home" asp-action="MultipleGrids">Multiple grids</a>
@@ -96,6 +126,9 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" style="color:white;" asp-area="" asp-controller="Home" asp-action="Images">Images</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" style="color:white;" href="/GridPage">Razor Page</a>
                     </li>
                 </ul>
             </div>

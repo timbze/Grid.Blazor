@@ -4,20 +4,18 @@ using GridBlazorServerSide.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Globalization;
+using GridShared.Data;
 
 namespace GridBlazorServerSide
 {
     public class Startup
     {
-        public static string ConnectionString = "Server=.\\SQLEXPRESS;Database=NorthWind;Trusted_Connection=True;MultipleActiveResultSets=true";
-
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -31,7 +29,7 @@ namespace GridBlazorServerSide
         {
             services.AddDbContext<NorthwindDbContext>(options =>
             {
-                options.UseSqlServer(ConnectionString);
+                options.UseGridBlazorDatabase();
                 //options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.QueryClientEvaluationWarning));
             });
 
@@ -46,6 +44,7 @@ namespace GridBlazorServerSide
             services.AddScoped<IShipperService, ShipperService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<ITruckService, TruckService>();
+            services.AddScoped<IEmployeeFileService, EmployeeFileService>();
 
             services.AddBootstrapCss();
 
@@ -64,7 +63,18 @@ namespace GridBlazorServerSide
                             new CultureInfo("nl-NL"),
                             new CultureInfo("tr-TR"),
                             new CultureInfo("cs-CZ"),
-                            new CultureInfo("sl-SI")
+                            new CultureInfo("sl-SI"),
+                            new CultureInfo("se-SE"),
+                            new CultureInfo("sr-Latn-RS"),
+                            new CultureInfo("sr-Cyrl-RS"),
+                            new CultureInfo("sr-Latn-BA"),
+                            new CultureInfo("sr-Cyrl-BA"),
+                            new CultureInfo("hr-HR"),
+                            new CultureInfo("fa-IR"),
+                            new CultureInfo("ca-ES"),
+                            new CultureInfo("gl-ES"),
+                            new CultureInfo("eu-ES"),
+                            new CultureInfo("pt-BR")
                         };
 
                     options.DefaultRequestCulture = new RequestCulture(culture: "en-US", uiCulture: "en-US");

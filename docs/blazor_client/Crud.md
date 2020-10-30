@@ -17,14 +17,22 @@ These are the supported features:
 
 ## Auto-generated forms
 
-You can enable CRUD using the **Crud** method of the **GridClient** object:
+You can enable CRUD using the **Crud(bool enabled, ICrudDataService<T> crudDataService)** method of the **GridClient** object:
 ```c#   
     var client = new GridClient<Order>(HttpClient, url, query, false, "ordersGrid", c => 
             ColumnCollections.OrderColumnsWithCrud(c, NavigationManager.BaseUri), locale)
         .Crud(true, orderService)
 ```
 
-**Note**: All 4 crud forms can be enabled at the same time with the ```Crud(bool enabled, ...)``` method, but you can enable one by one using  the ```Crud(bool create, bool read, bool update, bool delete, ...)``` method.
+You can also enable CRUD depending on a condition for each row using the **Crud(bool createEnabled, Func<T, bool> enabled, ICrudDataService<T> crudDataService)** method:
+```c#   
+    var client = new GridClient<Order>(HttpClient, url, query, false, "ordersGrid", c => 
+            ColumnCollections.OrderColumnsWithCrud(c, NavigationManager.BaseUri), locale)
+        .Crud(true, r => r.Customer.IsVip, orderService)
+```
+The create form can only be enabled using a ```bool``` parameter. But the read, update and delete forms can be enabled using a function that returns a ```bool```.
+
+**Note**: All 4 crud forms can be enabled at the same time with the former methods, but you can enable one by one using ```Crud(bool create, bool read, bool update, bool delete, ICrudDataService<T> crudDataService)``` or ```Crud(bool createEnabled, Func<T, bool> readEnabled, Func<T, bool> updateEnabled, Func<T, bool> deleteEnabled, ICrudDataService<T> crudDataService)``` methods.
 
 The parameter **crudDataService** of the **Crud** method must be a class that implements the **ICrudDataService<T>** interface on the front-end project. 
 
@@ -258,6 +266,8 @@ inputType | ```InputType``` enum. Its value can be ```InputType.TextArea```, ```
 
 You can also add components on the CRUD forms using the ```RenderCrudComponentAs<TComponent>``` method. You must define these columns as **Hidden** to show them just on CRUD forms.
 
+You can configure the width of the column input element using the ```SetCrudWidth(int width)``` and ```SetCrudWidth(int width, int labelWidtth)``` methods. The default value for the column width is 5 and and for the label width is 2. You can configure them from 1 to 11, but the sum of both can not be more than 12.
+
 And finally all columns included in the grid but not in the CRUD forms should be configured as "CRUD hidden" using the ```SetCrudHidden(true)``` method.
 
 **Notes**: 
@@ -276,13 +286,13 @@ This is an example of column definition:
             + o.Employee.FirstName + " " + o.Employee.LastName, path + $"api/SampleData/GetAllEmployees");
         c.Add(o => o.ShipVia, true).SetSelectField(true, o => o.Shipper == null ? "" : o.Shipper.ShipperID.ToString() 
             + " - " + o.Shipper.CompanyName, path + $"api/SampleData/GetAllShippers");
-        c.Add(o => o.OrderDate, "OrderCustomDate").Titled(SharedResource.OrderCustomDate).Format("{0:yyyy-MM-dd}");
+        c.Add(o => o.OrderDate, "OrderCustomDate").Titled(SharedResource.OrderCustomDate).Format("{0:yyyy-MM-dd}").SetCrudWidth(3);
         c.Add(o => o.Customer.CompanyName).Titled(SharedResource.CompanyName).SetReadOnlyOnUpdate(true);
         c.Add(o => o.Customer.ContactName).Titled(SharedResource.ContactName).SetCrudHidden(true);
         c.Add(o => o.Freight).Titled(SharedResource.Freight).Format("{0:F}");
         c.Add(o => o.Customer.IsVip).Titled(SharedResource.IsVip).RenderValueAs(o => o.Customer.IsVip ? "Yes" : "No").SetCrudHidden(true);
-        c.Add(o => o.RequiredDate, true).Format("{0:yyyy-MM-dd}");
-        c.Add(o => o.ShippedDate, true).Format("{0:yyyy-MM-dd}");
+        c.Add(o => o.RequiredDate, true).Format("{0:yyyy-MM-dd}").SetCrudWidth(3);
+        c.Add(o => o.ShippedDate, true).Format("{0:yyyy-MM-dd}").SetCrudWidth(3);
         c.Add(o => o.ShipName, true);
         c.Add(o => o.ShipAddress, true);
         c.Add(o => o.ShipCity, true);
@@ -300,6 +310,115 @@ This is an example of a grid using CRUD:
 And this is an auto-genereated edit form:
 
 ![](../images/Crud_edit.png)
+
+## File type columns
+
+If you need to upload files on the CRUD forms, you have to use a not connected, named and hidden colum. The column definition should use the  **SetInputFileType** method in order to get the correct html element.
+```c#   
+    c.Add(true, "PhotoFile").Titled("Photo").SetInputFileType();   
+```
+
+The **SetInputFileType** method has 1 optional parameter:
+Parameter | Description
+--------- | ----------
+multiple | Its a boolean to configure if the input element can upload multiple files
+
+You must also configure CRUD using the **Crud(bool enabled, ICrudDataService<T> crudDataService, ICrudFileService<T> crudFileService)** method of the **GridClient** object:
+```c#   
+    var client = new GridClient<Employee>(HttpClient, url, query, false, "employeesGrid", ColumnCollections.EmployeeColumns, locale)
+        .Crud(true, employeeService, employeeFileService);      
+```
+
+The parameter **crudFileService** of the **Crud** method must be a class that implements the **ICrudFileService<T>** interface. This interface has 3 methods:
+- ```Task InsertFiles(T item, IQueryDictionary<IFileListEntry[]> files);```
+- ```Task<T> UpdateFiles(T item, IQueryDictionary<IFileListEntry[]> files);```
+- ```Task DeleteFiles(params object[] keys);```
+
+These methods will be responsible to perform all file operations either on a server file repository, or a database or a cloud service as Azure Blob Storage or Amazon S3.
+
+And finally you have to load this ```javascript``` on the html page:
+```
+    <script src="_content/Agno.BlazorInputFile/inputfile.js"></script>
+```
+
+**Notes:**
+- ```InsertFiles``` method will be executed after inserting the new record on the database. So it's executed after the ```Insert``` method of your ```ICrudDataService<T>``` implementation. This will ensure the record includes the primary keys in case of auto-generated ones. If the ```InsertFiles``` method does any modification to the record that requires to be applied to the database, it will no be automatically updated. So you will have to call the ```Update``` method of your ```ICrudDataService<T>``` implementation from the ```InsertFiles``` method.
+- ```UpdateFiles``` method will be executed before updating the record on the database. So it's executed bofore the ```Update``` method of your ```ICrudDataService<T>``` implementation. If the ```UpdateFiles``` method does any modification to the record, it will be automatically updated on the database.
+- ```DeleteFiles``` method will be executed before deleting the record on the database. So it's executed bofore the ```Delete``` method of your ```ICrudDataService<T>``` implementation.
+
+You can see how it works clicking on the "Employees" button of this sample https://gridblazor.azurewebsites.net/embedded
+
+## Code confirmation to perform CRUD
+
+CRUD forms can include a code confirmation feature to make the create, update and delete more secure. 
+
+If you enable this feature, two fields are added at the end of the form:
+- the first one includes a randomly generated string
+- the second one is empty and the user must enter the same value of the first field to be able to save any item modification 
+
+You can configure this feature using the ```SetCreateConfirmation```, ```SetUpdateConfirmation``` and ```SetDeleteConfirmation``` of the ```GridClient``` object.
+These method have the following parameters:
+Parameter | Type | Description
+--------- | ---- | -----------
+enabled | bool | it enables code confirmation
+width | int (optional) | number to configure the input element width. The default value is 5
+labelWidth | int (optional) | number to configure the label element width. The default value is 2
+
+You can enable this feature as followw:
+```c#
+    var client = new GridClient<Order>(HttpClient, url, query, false, "ordersGrid", ColumnCollections.OrderColumnsWithCustomCrud, locale)
+        .Crud(true, orderService)
+        .SetCreateConfirmation(true)
+        .SetUpdateConfirmation(true)
+        .SetDeleteConfirmation(true);
+```
+
+## CRUD button labels
+
+```GridBlazor``` uses buttons with a background image by default. You can change these images overriding their styles. But you can also use text labels. 
+
+You will have to use the ```SetCrudButtonLabels``` method of the ```GridClient``` object for this:
+```c#
+    var client = new GridClient<Order>(HttpClient, url, query, false, "ordersGrid", ColumnCollections.OrderColumnsWithCustomCrud, locale)
+        .Crud(true, orderService)
+        .SetCrudButtonLabels("Add", "View", "Edit", "Delete");
+```
+
+## CRUD form labels
+
+You can change the default CRUD form titles using the ```SetCrudFormLabels``` method of the ```GridClient``` object for this:
+```c#
+    var client = new GridClient<Order>(HttpClient, url, query, false, "ordersGrid", ColumnCollections.OrderColumnsWithCustomCrud, locale)
+        .Crud(true, orderService)
+        .SetCrudFormLabels("Add Order", "View Order", "Edit Order", "Delete Order");
+```
+
+## CRUD buttons on the grid header
+
+You can have the all the CRUD buttons on the grid header instead of the grid rows. If you decide to use this layout you must configure the grid to allow row selection. Once you selects one row you can click on the "Edit", "View" and "Delete" buttons of the header.
+
+The configuration for this type of grid is as follows:
+
+```c#
+    var client = new GridClient<Order>(HttpClient, url, query, false, "ordersGrid", ColumnCollections.OrderColumnsWithCustomCrud, locale)
+        .Selectable(true)
+        .Crud(true, orderService)
+        .SetHeaderCrudButtons(true);
+```
+
+This is an example of grid with CRUD buttons on the header:
+
+![](../images/Crud_header_button.png)
+
+You can also use text labels for the header buttons. In this the configuration is as follows:
+
+```c#
+    var client = new GridClient<Order>(HttpClient, url, query, false, "ordersGrid", ColumnCollections.OrderColumnsWithCustomCrud, locale)
+        .Selectable(true)
+        .Crud(true, orderService)
+        .SetHeaderCrudButtons(true);
+        .SetCrudButtonLabels("Add", "View", "Edit", "Delete");
+```
 
 ## Custom forms (Optional)
 

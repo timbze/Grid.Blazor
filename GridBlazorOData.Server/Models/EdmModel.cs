@@ -1,6 +1,6 @@
 ﻿using GridBlazorOData.Shared.Models;
-using Microsoft.AspNet.OData.Builder;
 using Microsoft.OData.Edm;
+using Microsoft.OData.ModelBuilder;
 
 namespace GridBlazorOData.Server.Models
 {
@@ -10,6 +10,7 @@ namespace GridBlazorOData.Server.Models
         {
             ODataConventionModelBuilder builder = new ODataConventionModelBuilder();
             builder.EntitySet<Order>("Orders");
+            builder.EntitySet<Order>("OrdersWithErrors");
             builder.EntitySet<OrderDetail>("OrderDetails");
             builder.EntitySet<Customer>("Customers");
             builder.EntitySet<Employee>("Employees");

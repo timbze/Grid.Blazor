@@ -4,6 +4,7 @@ using GridBlazorClientSide.Shared.Models;
 using GridMvc.Server;
 using GridShared;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -37,11 +38,44 @@ namespace GridBlazorClientSide.Server.Controllers
         }
 
         [HttpGet("[action]")]
+        public ActionResult GetOrdersGridordersAutoGenerateColumns()
+        {
+            var repository = new OrdersRepository(_context);
+            IGridServer<Order> server = new GridServer<Order>(repository.GetAll(), Request.Query,
+                true, "ordersGrid", null)
+                    .AutoGenerateColumns()
+                    .WithPaging(10)
+                    .Sortable()
+                    .Filterable()
+                    .WithMultipleFilters()
+                    .WithGridItemsCount();
+
+            var items = server.ItemsToDisplay;
+            return Ok(items);
+        }
+
+        [HttpGet("[action]")]
         public ActionResult GetOrdersGridWithTotals()
         {
             var repository = new OrdersRepository(_context);
             IGridServer<Order> server = new GridServer<Order>(repository.GetAll(), Request.Query,
                 true, "ordersGrid", ColumnCollections.OrderColumnsWithTotals)
+                    .WithPaging(10)
+                    .Sortable()
+                    .Filterable()
+                    .WithMultipleFilters()
+                    .WithGridItemsCount();
+
+            var items = server.ItemsToDisplay;
+            return Ok(items);
+        }
+
+        [HttpGet("[action]")]
+        public ActionResult GetOrdersGridWithCount()
+        {
+            var repository = new OrdersRepository(_context);
+            IGridServer<Order> server = new GridServer<Order>(repository.GetAll().Include(r => r.OrderDetails), Request.Query,
+                true, "ordersGrid", ColumnCollections.OrderColumnsCount)
                     .WithPaging(10)
                     .Sortable()
                     .Filterable()
@@ -140,6 +174,26 @@ namespace GridBlazorClientSide.Server.Controllers
             var repository = new OrdersRepository(_context);
             IGridServer<Order> server = new GridServer<Order>(repository.GetAll(), Request.Query,
                 true, "ordersGrid", c => ColumnCollections.OrderColumnsWithNestedCrud(c, null, null))
+                    .WithPaging(10)
+                    .Sortable()
+                    .Filterable()
+                    .WithMultipleFilters()
+                    .WithGridItemsCount();
+
+            var items = server.ItemsToDisplay;
+            return Ok(items);
+        }
+
+        [HttpGet("[action]")]
+        public ActionResult GetOrderColumnsWithErrors()
+        {
+            var random = new Random();
+            if (random.Next(2) == 0)
+                return BadRequest();
+
+            var repository = new OrdersRepository(_context);
+            IGridServer<Order> server = new GridServer<Order>(repository.GetAll(), Request.Query,
+                true, "ordersGrid", ColumnCollections.OrderColumns)
                     .WithPaging(10)
                     .Sortable()
                     .Filterable()
@@ -355,6 +409,33 @@ namespace GridBlazorClientSide.Server.Controllers
 
             var items = server.ItemsToDisplay;
             return Ok(items);
+        }
+
+        [HttpPost("[action]")]
+        public async Task<ActionResult> SetEmployeePhoto([FromBody] Employee employee)
+        {
+            if (ModelState.IsValid)
+            {
+                var repository = new EmployeeRepository(_context);
+                try
+                {
+                    await repository.UpdatePhoto(employee.EmployeeID, employee.Base64String);
+                    repository.Save();
+
+                    return NoContent();
+                }
+                catch (Exception e)
+                {
+                    return BadRequest(new
+                    {
+                        message = e.Message.Replace('{', '(').Replace('}', ')')
+                    });
+                }
+            }
+            return BadRequest(new
+            {
+                message = "ModelState is not valid"
+            });
         }
     }
 }

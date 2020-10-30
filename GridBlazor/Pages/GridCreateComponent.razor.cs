@@ -1,7 +1,10 @@
-﻿using GridBlazor.Resources;
+﻿using Agno.BlazorInputFile;
+using GridBlazor.Resources;
 using GridShared.Columns;
 using GridShared.Utility;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,9 +20,20 @@ namespace GridBlazor.Pages
         private bool _shouldRender = false;
         private QueryDictionary<RenderFragment> _renderFragments;
         private IEnumerable<string> _tabGroups;
+        private string _code = StringExtensions.RandomString(8);
+        private string _confirmationCode = "";
 
         public string Error { get; set; } = "";
         public QueryDictionary<string> ColumnErrors { get; set; } = new QueryDictionary<string>();
+        public QueryDictionary<VariableReference> Children { get; private set; } = new QueryDictionary<VariableReference>();
+
+        public QueryDictionary<VariableReference> InputFiles { get; private set; } = new QueryDictionary<VariableReference>();
+        public QueryDictionary<IFileListEntry[]> Files { get; private set; } = new QueryDictionary<IFileListEntry[]>();
+
+        public EditForm Form { get; private set; }
+
+        [Inject]
+        private IJSRuntime jSRuntime { get; set; }
 
         [CascadingParameter(Name = "GridComponent")]
         protected GridComponent<T> GridComponent { get; set; }
@@ -38,8 +52,10 @@ namespace GridBlazor.Pages
 
                 if (column.CreateComponentType != null)
                 {
+                    VariableReference reference = new VariableReference();
+                    Children.Add(column.Name, reference);
                     _renderFragments.Add(column.Name, GridCellComponent<T>.CreateComponent(_sequence,
-                        column.CreateComponentType, column, Item, null, true));
+                        GridComponent, column.CreateComponentType, column, Item, null, true, reference));
                 }
             }
             _tabGroups = GridComponent.Grid.Columns
@@ -111,12 +127,34 @@ namespace GridBlazor.Pages
             }
         }
 
+        private void OnFileChange(IGridColumn column, IFileListEntry[] files)
+        {
+            if (!column.MultipleInput && files.Length > 1)
+                files = new IFileListEntry[] { files[0] };
+
+            if (Files.ContainsKey(column.FieldName))
+                Files[column.FieldName] = files;
+            else
+                Files.Add(column.FieldName, files);
+
+            _shouldRender = true;
+            StateHasChanged();
+        }
+
         protected async Task CreateItem()
         {
+            if (GridComponent.Grid.CreateConfirmation && _code != _confirmationCode)
+            {
+                _shouldRender = true;
+                Error = Strings.ConfirmCodeError;
+                return;
+            }
+
             try
             {
                 Error = "";
                 ColumnErrors = new QueryDictionary<string>();
+                _tabGroups = null;
                 await GridComponent.CreateItem(this);
             }
             catch (GridException e)
@@ -130,6 +168,17 @@ namespace GridBlazor.Pages
                 _shouldRender = true;
                 Error = Strings.CreateError;
             } 
+        }
+
+        protected async Task ButtonFileClicked(string fieldName)
+        {
+            var inputFile = InputFiles.Get(fieldName);
+            var type = inputFile.Variable.GetType();
+            if (type == typeof(Agno.BlazorInputFile.InputFile)
+                && ((Agno.BlazorInputFile.InputFile)inputFile.Variable).InputFileElement.Id != null)
+            {
+                await jSRuntime.InvokeVoidAsync("gridJsFunctions.click", (ElementReference)((Agno.BlazorInputFile.InputFile)inputFile.Variable).InputFileElement);
+            }
         }
 
         protected void BackButtonClicked()

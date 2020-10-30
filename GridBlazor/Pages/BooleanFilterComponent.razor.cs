@@ -3,6 +3,7 @@ using GridShared.Utility;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -44,10 +45,25 @@ namespace GridBlazor.Pages
             {
                 await jSRuntime.InvokeVoidAsync("gridJsFunctions.focusElement", boolFilter);
                 ScreenPosition sp = await jSRuntime.InvokeAsync<ScreenPosition>("gridJsFunctions.getPosition", boolFilter);
-                if (sp != null && sp.X + sp.Width > sp.InnerWidth)
+                ScreenPosition gridComponentSP = await jSRuntime.InvokeAsync<ScreenPosition>("gridJsFunctions.getPosition", GridHeaderComponent.GridComponent.Gridmvc);
+                if (GridHeaderComponent.GridComponent.Grid.Direction == GridShared.GridDirection.RTL)
                 {
-                    _offset = sp.X + sp.Width - sp.InnerWidth + 25;
-                    StateHasChanged();
+                    if (sp != null && gridComponentSP != null && sp.X < Math.Max(25, gridComponentSP.X))
+                    {
+                        _offset = -sp.X + Math.Max(25, gridComponentSP.X);
+                        StateHasChanged();
+                    }
+                }
+                else
+                {
+                    if (sp != null && gridComponentSP != null 
+                        && sp.X + sp.Width > Math.Min(sp.InnerWidth, gridComponentSP.X
+                        + gridComponentSP.Width + 25))
+                    {
+                        _offset = sp.X + sp.Width - Math.Min(sp.InnerWidth, gridComponentSP.X
+                        + gridComponentSP.Width + 25) + 25;
+                        StateHasChanged();
+                    }
                 }
             }
         }

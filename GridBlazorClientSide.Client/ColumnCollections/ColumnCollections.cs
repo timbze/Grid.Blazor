@@ -197,6 +197,34 @@ namespace GridBlazorClientSide.Client.ColumnCollections
             .RenderValueAs(o => o.Customer.IsVip ? Strings.BoolTrueLabel : Strings.BoolFalseLabel);
         };
 
+        public static Action<IGridColumnCollection<Order>> OrderColumnsCount = c =>
+        {
+            /* Adding "OrderID" column: */
+            c.Add(o => o.OrderID).SetPrimaryKey(true).Titled(SharedResource.Number).SetWidth(100);
+
+            /* Adding "OrderDate" column: */
+            c.Add(o => o.OrderDate, "OrderCustomDate").Titled(SharedResource.OrderCustomDate)
+            .SetWidth(120).RenderComponentAs<TooltipCell>();
+
+            /* Adding "CompanyName" column: */
+            c.Add(o => o.Customer.CompanyName).Titled(SharedResource.CompanyName)
+            .SetWidth(250);
+
+            /* Adding "ContactName" column: */
+            c.Add(o => o.Customer.ContactName).Titled(SharedResource.ContactName).SetWidth(250);
+
+            /* Adding "Freight" column: */
+            c.Add(o => o.Freight)
+            .Titled(SharedResource.Freight)
+            .Format("{0:F}");
+
+            /* Adding "Vip customer" column: */
+            c.Add(o => o.Customer.IsVip).Titled(SharedResource.IsVip).SetWidth(70).Css("hidden-xs") //hide on phones
+            .RenderValueAs(o => o.Customer.IsVip ? Strings.BoolTrueLabel : Strings.BoolFalseLabel);
+
+            c.Add(o => o.OrderDetails.Count).Titled("Details");
+        };
+
         public static Action<IGridColumnCollection<Order>, string> OrderColumnsWithCrud = (c, path) =>
         {
             /* Adding "OrderID" column: */
@@ -216,7 +244,8 @@ namespace GridBlazorClientSide.Client.ColumnCollections
             .SetInputType(InputType.Week)
             .SetFilterWidgetType("Week")
             .RenderValueAs(o => DateTimeUtils.GetWeekDateTimeString(o.OrderDate))
-            .SetWidth(120);
+            .SetWidth(120)
+            .SetCrudWidth(3);
 
             /* Adding "CompanyName" column: */
             c.Add(o => o.Customer.CompanyName).Titled(SharedResource.CompanyName)
@@ -235,10 +264,10 @@ namespace GridBlazorClientSide.Client.ColumnCollections
             .RenderValueAs(o => o.Customer.IsVip ? Strings.BoolTrueLabel : Strings.BoolFalseLabel).SetCrudHidden(true);
 
             /* Adding hidden "RequiredDate" column: */
-            c.Add(o => o.RequiredDate, true).Format("{0:yyyy-MM-dd}");
+            c.Add(o => o.RequiredDate, true).Format("{0:yyyy-MM-dd}").SetCrudWidth(3);
 
             /* Adding hidden "ShippedDate" column: */
-            c.Add(o => o.ShippedDate, true).Format("{0:yyyy-MM-dd}");
+            c.Add(o => o.ShippedDate, true).Format("{0:yyyy-MM-dd}").SetCrudWidth(3);
 
             /* Adding hidden "ShipName" column: */
             c.Add(o => o.ShipName, true);
@@ -386,6 +415,38 @@ namespace GridBlazorClientSide.Client.ColumnCollections
 
             /* Adding "ContactName" column: */
             c.Add(o => o.Customer.ContactName).Titled(SharedResource.ContactName).SetWidth(250);
+
+            /* Adding "Freight" column: */
+            c.Add(o => o.Freight)
+            .Titled(SharedResource.Freight)
+            .Format("{0:F}");
+
+            /* Adding "Vip customer" column: */
+            c.Add(o => o.Customer.IsVip).Titled(SharedResource.IsVip).SetWidth(70).Css("hidden-xs") //hide on phones
+            .RenderValueAs(o => o.Customer.IsVip ? Strings.BoolTrueLabel : Strings.BoolFalseLabel);
+        };
+
+        public static Action<IGridColumnCollection<Order>> OrderColumnsWithButttonComponents = c =>
+        {
+            /* Adding not mapped column, that renders body, using inline Razor html helper */
+            c.Add().Encoded(false).Sanitized(false).RenderComponentAs<ShipperButtonCell>();
+
+            /* Adding "OrderID" column: */
+            c.Add(o => o.OrderID).Titled(SharedResource.Number).SetTooltip("Order ID is ... ").SetWidth(100);
+
+            /* Adding "OrderDate" column: */
+            c.Add(o => o.OrderDate, "OrderCustomDate").Titled(SharedResource.OrderCustomDate)
+            .SetWidth(120).RenderComponentAs<TooltipCell>();
+
+            /* Adding "CompanyName" column: */
+            c.Add(o => o.Customer.CompanyName).Titled(SharedResource.CompanyName)
+            .SetWidth(250);
+
+            /* Adding "ContactName" column: */
+            c.Add(o => o.Customer.ContactName).Titled(SharedResource.ContactName).SetWidth(250);
+
+            /* Adding "Customer.Country" hidden column: */
+            c.Add(o => o.Customer.Country, true);
 
             /* Adding "Freight" column: */
             c.Add(o => o.Freight)
@@ -655,12 +716,27 @@ namespace GridBlazorClientSide.Client.ColumnCollections
 
         public static Action<IGridColumnCollection<Employee>> EmployeeColumns = c =>
         {
-            c.Add(o => o.EmployeeID).Titled(SharedResource.Number).SetWidth(100);
-            c.Add(o => o.FirstName).SetWidth(250);
-            c.Add(o => o.LastName).SetWidth(250);
-            c.Add(o => o.HireDate).SetWidth(120);
-            c.Add().Encoded(false).Sanitized(false).SetWidth("5%")
-                .RenderValueAs(o => $"<img width='50' height='50' src='data:image/bmp;base64,{o.Base64String}' />");
+            c.Add(o => o.EmployeeID).SetPrimaryKey(true).Titled(SharedResource.Number);
+            c.Add(o => o.TitleOfCourtesy);
+            c.Add(o => o.FirstName);
+            c.Add(o => o.LastName);
+            c.Add(o => o.Title);
+            c.Add(o => o.BirthDate, true).Format("{0:yyyy-MM-dd}");
+            c.Add(o => o.HireDate).Format("{0:yyyy-MM-dd}");
+            c.Add().Encoded(false).Sanitized(false).SetWidth("5%").Titled("Photo")
+                .RenderValueAs(o => $"<img width='50' height='50' src='data:image/bmp;base64,{o.Base64String}' />")
+                .SetCrudHidden(true);
+            c.Add(o => o.Address, true);
+            c.Add(o => o.City, true);
+            c.Add(o => o.Region, true);
+            c.Add(o => o.PostalCode, true);
+            c.Add(o => o.Country, true);
+            c.Add(o => o.HomePhone, true);
+            c.Add(o => o.Extension, true);
+            c.Add(o => o.ReportsTo, true);
+            c.Add(o => o.Notes, true).SetInputType(InputType.TextArea);
+            c.Add(o => o.PhotoPath, true);
+            c.Add(true, "PhotoFile").Titled("Photo").SetInputFileType();
         };
 
         public static Action<IGridColumnCollection<Customer>> CustomerColumns = c =>

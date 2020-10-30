@@ -255,4 +255,31 @@
   <data name="IsNull" xml:space="preserve">
     <value>Boş</value>
   </data>
+  <data name="SelectionDeleteError" xml:space="preserve">
+    <value>Silmek istediğiniz satırı seçmelisiniz</value>
+  </data>
+  <data name="SelectionReadError" xml:space="preserve">
+    <value>Görüntülemek istediğiniz satırı seçmelisiniz</value>
+  </data>
+  <data name="SelectionUpdateError" xml:space="preserve">
+    <value>Düzenlemek istediğiniz satırı seçmelisiniz</value>
+  </data>
+  <data name="Files" xml:space="preserve">
+    <value>Dosyaları</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Kod</value>
+  </data>
+  <data name="Confirm Code" xml:space="preserve">
+    <value>Kodu Onayla</value>
+  </data>
+  <data name="String" xml:space="preserve">
+    <value>Kod</value>
+  </data>
+  <data name="ConfirmCodeError" xml:space="preserve">
+    <value>Kod ve onay kodu bu öğeyi kaydetmek için eşit olmalıdır</value>
+  </data>
+  <data name="DeleteConfirmCodeError" xml:space="preserve">
+    <value>Kod ve onay kodu bu öğeyi silmek için eşit olmalıdır</value>
+  </data>
 </root>

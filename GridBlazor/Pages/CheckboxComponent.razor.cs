@@ -1,4 +1,5 @@
-﻿using GridShared.Columns;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using GridShared.Columns;
 using GridShared.Events;
 using GridShared.Utility;
 using Microsoft.AspNetCore.Components;
@@ -58,14 +59,11 @@ namespace GridBlazor.Pages
             var keys = GridComponent.Grid.GetPrimaryKeyValues(Item);
             string stringKeys = string.Join('_', keys);
 
-            if (header != null && header.IsChecked().HasValue)
+            if (exceptCheckedRows != null && !string.IsNullOrWhiteSpace(stringKeys)
+                && exceptCheckedRows.ContainsKey(stringKeys))
+                _value = exceptCheckedRows.Get(stringKeys);
+            else if (header != null && header.IsChecked().HasValue)
                 _value = header.IsChecked().Value;
-
-            if (exceptCheckedRows != null && !string.IsNullOrWhiteSpace(stringKeys))
-            {
-                if(exceptCheckedRows.ContainsKey(stringKeys))
-                    _value = exceptCheckedRows.Get(stringKeys);
-            }
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -85,13 +83,31 @@ namespace GridBlazor.Pages
         {
             if (e.ColumnName == _columnName && !_readonly)
             {
-                if (e.Value == CheckboxValue.Checked)
+                var header = GridComponent.HeaderComponents.Get(_columnName);
+                if (header != null && header.Column != null && header.Column.SingleCheckbox)
                 {
-                    _value = true;
+                    var exceptCheckedRows = GridComponent.ExceptCheckedRows.Get(_columnName);
+                    var keys = GridComponent.Grid.GetPrimaryKeyValues(Item);
+                    string stringKeys = string.Join('_', keys);
+                    if (exceptCheckedRows.ContainsKey(stringKeys))
+                    {
+                        _value = true;
+                    }
+                    else
+                    {
+                        _value = false;
+                    }
                 }
                 else
                 {
-                    _value = false;
+                    if (e.Value == CheckboxValue.Checked)
+                    {
+                        _value = true;
+                    }
+                    else
+                    {
+                        _value = false;
+                    }
                 }
                 StateHasChanged();
                 await Task.CompletedTask;
@@ -111,38 +127,55 @@ namespace GridBlazor.Pages
             var exceptCheckedRows = GridComponent.ExceptCheckedRows.Get(_columnName);
             var keys = GridComponent.Grid.GetPrimaryKeyValues(Item);
             string stringKeys = string.Join('_', keys);
-            if (exceptCheckedRows != null && !string.IsNullOrWhiteSpace(stringKeys))
-            {
-                if(exceptCheckedRows.ContainsKey(stringKeys))
-                {
-                    if (header != null && header.IsChecked().HasValue && header.IsChecked().Value == value)
-                        exceptCheckedRows.Remove(stringKeys);
-                    else
-                        exceptCheckedRows[stringKeys] = value;
-                }
-                else
-                {
-                    if(header == null || !header.IsChecked().HasValue || header.IsChecked().Value != value) 
-                        exceptCheckedRows.Add(stringKeys, value);
-                }
-            }
 
-            CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
+            if (header != null && header.Column != null && header.Column.SingleCheckbox)
             {
-                ColumnName = _columnName,
-                Item = Item,
-                RowId = RowId
-            };
-            if (_value)
-            {
-                args.Value = CheckboxValue.Checked;
+                var checkedRows = new QueryDictionary<bool>();
+                checkedRows.Add(stringKeys, value);
+                GridComponent.ExceptCheckedRows.AddOrSet(_columnName, checkedRows);
+
+                CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
+                {
+                    ColumnName = _columnName
+                };
+                await GridComponent.OnHeaderCheckboxChanged(args);
+                StateHasChanged();
             }
             else
             {
-                args.Value = CheckboxValue.Unchecked;
+                if (exceptCheckedRows != null && !string.IsNullOrWhiteSpace(stringKeys))
+                {
+                    if (exceptCheckedRows.ContainsKey(stringKeys))
+                    {
+                        if (header != null && header.IsChecked().HasValue && header.IsChecked().Value == value)
+                            exceptCheckedRows.Remove(stringKeys);
+                        else
+                            exceptCheckedRows[stringKeys] = value;
+                    }
+                    else
+                    {
+                        if (header == null || !header.IsChecked().HasValue || header.IsChecked().Value != value)
+                            exceptCheckedRows.Add(stringKeys, value);
+                    }
+                }
+
+                CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
+                {
+                    ColumnName = _columnName,
+                    Item = Item,
+                    RowId = RowId
+                };
+                if (_value)
+                {
+                    args.Value = CheckboxValue.Checked;
+                }
+                else
+                {
+                    args.Value = CheckboxValue.Unchecked;
+                }
+                await GridComponent.OnRowCheckboxChanged(args);
+                StateHasChanged();
             }
-            await GridComponent.OnRowCheckboxChanged(args);
-            StateHasChanged();
         }
     }
 }

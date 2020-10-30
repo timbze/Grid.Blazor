@@ -112,6 +112,9 @@ else
 
             /* Adding hidden "ShipCountry" column: */
             c.Add(o => o.ShipCountry, true);
+
+            /* Adding "OrderDetails" column: */
+            c.Add(o => o.OrderDetails.Count).Titled("Details").SetCrudHidden(true);
         };
 
         var client = new GridClient<Order>(q => orderService.GetOrdersGridRows(orderColumns, q),
@@ -127,7 +130,12 @@ else
             .Searchable(true, false)
             .WithGridItemsCount()
             .ChangePageSize(true)
-            .Crud(true, orderService);
+            .Crud(true, orderService)
+            .SetCreateConfirmation(true)
+            .SetUpdateConfirmation(true)
+            .SetDeleteConfirmation(true)
+            .AddButtonComponent<EmployeeComponent>("Employees", "Employees")
+            .AddButtonComponent<CustomerComponent>("Customers", "Curstomers");
 
         _grid = client.Grid;
 

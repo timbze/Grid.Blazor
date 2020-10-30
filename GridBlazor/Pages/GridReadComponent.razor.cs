@@ -1,4 +1,5 @@
 ﻿using GridBlazor.Columns;
+using GridShared;
 using GridShared.Columns;
 using GridShared.Utility;
 using Microsoft.AspNetCore.Components;
@@ -15,6 +16,9 @@ namespace GridBlazor.Pages
         private bool _shouldRender = false;
         private QueryDictionary<RenderFragment> _renderFragments;
         private IEnumerable<string> _tabGroups;
+        private QueryDictionary<bool> _buttonCrudComponentVisibility = new QueryDictionary<bool>();
+
+        public QueryDictionary<VariableReference> Children { get; private set; } = new QueryDictionary<VariableReference>();
 
         [CascadingParameter(Name = "GridComponent")]
         protected GridComponent<T> GridComponent { get; set; }
@@ -33,24 +37,61 @@ namespace GridBlazor.Pages
 
                 if (((ICGridColumn)column).SubGrids != null)
                 {
-                    var values = ((ICGridColumn)column).GetSubGridKeyValues(Item).Values.ToArray();
-                    var grid = await ((ICGridColumn)column).SubGrids(values, false, true, false, false) as ICGrid;
-                    _renderFragments.Add(column.Name, CreateSubGridComponent(grid));
+                    var values = ((ICGridColumn)column).GetSubGridKeyValues(Item);
+                    var grid = await ((ICGridColumn)column).SubGrids(values.Values.ToArray(), false, true, false, false) as ICGrid;
+                    grid.Direction = GridComponent.Grid.Direction;
+                    grid.FixedValues = values;
+                    VariableReference reference = new VariableReference();
+                    if (Children.ContainsKey(column.Name))
+                        Children[column.Name] = reference;
+                    else
+                        Children.Add(column.Name, reference);
+                    if (_renderFragments.ContainsKey(column.Name))
+                        _renderFragments[column.Name] = CreateSubGridComponent(grid, reference);
+                    else
+                        _renderFragments.Add(column.Name, CreateSubGridComponent(grid, reference));
                 }
                 else if (column.ReadComponentType != null)
                 {
-                    _renderFragments.Add(column.Name, GridCellComponent<T>.CreateComponent(_sequence, 
-                        column.ReadComponentType, column, Item, null, true));
+                    VariableReference reference = new VariableReference();
+                    if (Children.ContainsKey(column.Name))
+                        Children[column.Name] = reference;
+                    else
+                        Children.Add(column.Name, reference);
+                    if (_renderFragments.ContainsKey(column.Name))
+                        _renderFragments[column.Name] = GridCellComponent<T>.CreateComponent(_sequence,
+                            GridComponent, column.ReadComponentType, column, Item, null, true, reference);
+                    else
+                        _renderFragments.Add(column.Name, GridCellComponent<T>.CreateComponent(_sequence,
+                            GridComponent, column.ReadComponentType, column, Item, null, true, reference));
                 }
             }
             _tabGroups = GridComponent.Grid.Columns
                 .Where(r => !string.IsNullOrWhiteSpace(r.TabGroup) && _renderFragments.Keys.Any(s => s.Equals(r.Name)))
                 .Select(r => r.TabGroup).Distinct();
 
+            if (((CGrid<T>)GridComponent.Grid).ButtonCrudComponents != null && ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Count() > 0)
+            {
+                foreach (var key in ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Keys)
+                {
+                    var buttonCrudComponent = ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Get(key);
+                    if ((buttonCrudComponent.ReadMode != null && buttonCrudComponent.ReadMode(Item)) ||
+                        (buttonCrudComponent.ReadModeAsync != null && await buttonCrudComponent.ReadModeAsync(Item)) ||
+                        (buttonCrudComponent.GridMode.HasFlag(GridMode.Read)))
+                    {
+                        _buttonCrudComponentVisibility.Add(key, true);
+                    }
+                    else
+                    {
+                        _buttonCrudComponentVisibility.Add(key, false);
+                    }
+                }
+            }
+
             _shouldRender = true;
         }
         
-        private RenderFragment CreateSubGridComponent(ICGrid grid) => builder =>
+        private RenderFragment CreateSubGridComponent(ICGrid grid, VariableReference reference) => builder =>
         {
             Type gridComponentType = typeof(GridComponent<>).MakeGenericType(grid.Type);
             builder.OpenComponent(++_sequence, gridComponentType);

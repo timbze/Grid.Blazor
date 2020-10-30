@@ -29,13 +29,16 @@
                 y += element.offsetTop - element.scrollTop;
                 element = element.offsetParent;
             }
+            x -= Math.round(window.pageXOffset);
+            y -= Math.round(window.pageYOffset);
             var screenHeight = screen.availHeight;
             var screenWidth = screen.availWidth;
             var innerHeight = window.innerHeight;
             var innerWidth = window.innerWidth;
             return {
-                Width: width, Height: height, X: x, Y: y, ScreenWidth: screenWidth, ScreenHeight: screenHeight,
-                InnerWidth: innerWidth, InnerHeight: innerHeight
+                Width: Math.round(width), Height: Math.round(height), X: Math.round(x), Y: Math.round(y),
+                ScreenWidth: Math.round(screenWidth), ScreenHeight: Math.round(screenHeight),
+                InnerWidth: Math.round(innerWidth), InnerHeight: Math.round(innerHeight)
             };
         }
         else
@@ -60,5 +63,9 @@
         document.body.appendChild(link); // Needed for Firefox
         link.click();
         document.body.removeChild(link);
+    },
+    click: function (element) {
+        if (element)
+            element.click();
     }
 }

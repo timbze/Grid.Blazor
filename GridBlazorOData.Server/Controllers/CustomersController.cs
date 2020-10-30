@@ -1,7 +1,8 @@
 ﻿using GridBlazorOData.Server.Models;
 using GridBlazorOData.Shared.Models;
-using Microsoft.AspNet.OData;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Routing.Controllers;
 using System.Threading.Tasks;
 
 namespace GridBlazorOData.Server.Controllers
@@ -27,8 +28,8 @@ namespace GridBlazorOData.Server.Controllers
         public async Task<IActionResult> Get(string key)
         {
             var repository = new CustomersRepository(_context);
-            Customer order = await repository.GetById(key);
-            return Ok(order);
+            Customer customer = await repository.GetById(key);
+            return Ok(customer);
         }
     }
 }

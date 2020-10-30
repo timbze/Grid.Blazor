@@ -3,6 +3,7 @@ using GridShared;
 using GridShared.Columns;
 using GridShared.Filtering;
 using GridShared.Utility;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Primitives;
 using Microsoft.JSInterop;
 using System;
@@ -86,6 +87,16 @@ namespace GridBlazor
         bool ExcelExport { get; }
 
         /// <summary>
+        ///     Get and set export all rows to an Excel file
+        /// </summary>
+        bool ExcelExportAllRows { get; }
+
+        /// <summary>
+        ///     Get and set Excel file name
+        /// </summary>
+        string ExcelExportFileName { get; }
+
+        /// <summary>
         ///     Get and set custom create component
         /// </summary>
         Type CreateComponent { get; }
@@ -106,9 +117,9 @@ namespace GridBlazor
         Type DeleteComponent { get; }
 
         /// <summary>
-        ///     Get and set custom Delete component
+        ///     Get and set custom Button components dictionary
         /// </summary>
-        QueryDictionary<(string Label, Type ComponentType, IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)> ButtonComponents { get; }
+        QueryDictionary<(string Label, Nullable<MarkupString> Content, Type ComponentType, IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)> ButtonComponents { get; }
 
         /// <summary>
         ///     Get and set custom create component actions
@@ -194,5 +205,101 @@ namespace GridBlazor
         ///     Fixed column values for the OData url expand parameter
         /// </summary>
         IEnumerable<string> ODataExpandList { get; set; }
+
+        /// <summary>
+        ///     Override OData url expand parameter with list
+        /// </summary>
+        bool ODataOverrideExpandList { get; set; }
+
+        /// <summary>
+        ///     Create button label
+        /// </summary>
+        string CreateLabel { get; set; }
+
+        /// <summary>
+        ///     Read button label
+        /// </summary>
+        string ReadLabel { get; set; }
+
+        /// <summary>
+        ///     Update button label
+        /// </summary>
+        string UpdateLabel { get; set; }
+
+        /// <summary>
+        ///     Delete button label
+        /// </summary>
+        string DeleteLabel { get; set; }
+
+        /// <summary>
+        ///     Create form label
+        /// </summary>
+        public string CreateFormLabel { get; set; }
+
+        /// <summary>
+        ///     Read form label
+        /// </summary>
+        public string ReadFormLabel { get; set; }
+
+        /// <summary>
+        ///     Update form label
+        /// </summary>
+        public string UpdateFormLabel { get; set; }
+
+        /// <summary>
+        ///     Delete form label
+        /// </summary>
+        public string DeleteFormLabel { get; set; }
+
+        // <summary>
+        ///     Create CRUD confirmation fields
+        /// </summary>
+        bool CreateConfirmation { get; set; }
+
+        int CreateConfirmationWidth { get; set; }
+
+        int CreateConfirmationLabelWidth { get; set; }
+
+        /// <summary>
+        ///     Update CRUD confirmation fields
+        /// </summary>
+        bool UpdateConfirmation { get; set; }
+
+        int UpdateConfirmationWidth { get; set; }
+
+        int UpdateConfirmationLabelWidth { get; set; }
+
+        /// <summary>
+        ///     Delete CRUD confirmation fields
+        /// </summary>
+        bool DeleteConfirmation { get; set; }
+
+        int DeleteConfirmationWidth { get; set; }
+
+        int DeleteConfirmationLabelWidth { get; set; }
+        /// <summary>
+        ///     Header CRUD buttons
+        /// </summary>
+        bool HeaderCrudButtons { get; set; }
+
+        /// <summary>
+        ///     Header CRUD buttons
+        /// </summary>
+        bool ShowErrorsOnGrid { get; set; }
+
+        /// <summary>
+        ///     Header CRUD buttons
+        /// </summary>
+        bool ThrowExceptions { get; set; }
+
+        /// <summary>
+        ///     Error string to be shown on the view
+        /// </summary>
+        string Error { get; set; }
+
+        /// <summary>
+        ///     Go to Edit form after insert row
+        /// </summary>
+        bool EditAfterInsert { get; set; }
     }
 }

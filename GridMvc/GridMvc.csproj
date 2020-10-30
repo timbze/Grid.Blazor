@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <LangVersion>8.0</LangVersion>
     <GenerateEmbeddedFilesManifest>True</GenerateEmbeddedFilesManifest>
     <EnableDefaultEmbeddedResourceItems>False</EnableDefaultEmbeddedResourceItems>
     <Product>GridMvc</Product>
     <PackageId>GridMvcCore</PackageId>
-    <Version>2.15.4-tim20200622-01</Version>
+    <Version>4.0.0-tim20201030</Version>
     <Title>GridMvc</Title>
     <Description>ASP.NET MVC Grid component</Description>
     <Summary>ASP.NET MVC Grid component</Summary>
@@ -18,10 +19,16 @@
     <RepositoryUrl>https://github.com/timbze/Grid.Blazor</RepositoryUrl>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="5.0.0-rc.2.20475.17" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="3.1" />
+  </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="2.2.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
@@ -68,8 +75,34 @@
     <EmbeddedResource Include="Resources\Strings.cs.resx" LogicalName="GridMvc.Resources.Strings.cs.resources">
       <Generator></Generator>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.se.resx" LogicalName="GridMvc.Resources.Strings.se.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.sr.resx" LogicalName="GridMvc.Resources.Strings.sr.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.hr.resx" LogicalName="GridMvc.Resources.Strings.hr.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.fa-IR.resx" LogicalName="GridMvc.Resources.Strings.fa-IR.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.eu-ES.resx" LogicalName="GridMvc.Resources.Strings.eu-ES.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.gl-ES.resx" LogicalName="GridMvc.Resources.Strings.gl-ES.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.ca-ES.resx" LogicalName="GridMvc.Resources.Strings.ca-ES.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.pt-BR.resx" LogicalName="GridMvc.Resources.Strings.pt-BR.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\css\gridmvc.css" LogicalName="GridMvc.Resources.css.gridmvc.css" />
     <EmbeddedResource Include="Resources\css\gridmvc.min.css" LogicalName="GridMvc.Resources.css.gridmvc.min.css" />
+    <EmbeddedResource Include="Resources\css\gridmvc-bootstrap3.css" LogicalName="GridMvc.Resources.css.gridmvc-bootstrap3.css" />
+    <EmbeddedResource Include="Resources\css\gridmvc-bootstrap3.min.css" LogicalName="GridMvc.Resources.css.gridmvc-bootstrap3.min.css" />
     <EmbeddedResource Include="Resources\js\gridmvc.js" LogicalName="GridMvc.Resources.js.gridmvc.js" />
     <EmbeddedResource Include="Resources\js\gridmvc.min.js" LogicalName="GridMvc.Resources.js.gridmvc.min.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-lang-de.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-de.js" />
@@ -82,6 +115,14 @@
     <EmbeddedResource Include="Resources\js\gridmvc-lang-tr.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-tr.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-lang-sl.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-sl.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-lang-cs.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-cs.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-se.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-se.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-sr.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-sr.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-hr.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-hr.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-fa.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-fa.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-gl.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-gl.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-eu.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-eu.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-ca.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-ca.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-pt.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-pt.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-ajax.js" LogicalName="GridMvc.Resources.js.gridmvc-ajax.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-ajax.min.js" LogicalName="GridMvc.Resources.js.gridmvc-ajax.min.js" />
   </ItemGroup>

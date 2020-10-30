@@ -1,8 +1,12 @@
-﻿using GridBlazor.Columns;
+﻿using Agno.BlazorInputFile;
+using GridBlazor.Columns;
 using GridBlazor.Resources;
+using GridShared;
 using GridShared.Columns;
 using GridShared.Utility;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,9 +22,21 @@ namespace GridBlazor.Pages
         private bool _shouldRender = false;
         private QueryDictionary<RenderFragment> _renderFragments;
         private IEnumerable<string> _tabGroups;
+        private QueryDictionary<bool> _buttonCrudComponentVisibility = new QueryDictionary<bool>();
+        private string _code = StringExtensions.RandomString(8);
+        private string _confirmationCode = "";
 
         public string Error { get; set; } = "";
         public QueryDictionary<string> ColumnErrors { get; set; } = new QueryDictionary<string>();
+        public QueryDictionary<VariableReference> Children { get; private set; } = new QueryDictionary<VariableReference>();
+
+        public QueryDictionary<VariableReference> InputFiles { get; private set; } = new QueryDictionary<VariableReference>();
+        public QueryDictionary<IFileListEntry[]> Files { get; private set; } = new QueryDictionary<IFileListEntry[]>();
+
+        public EditForm Form { get; private set; }
+
+        [Inject]
+        private IJSRuntime jSRuntime { get; set; }
 
         [CascadingParameter(Name = "GridComponent")]
         protected GridComponent<T> GridComponent { get; set; }
@@ -41,27 +57,64 @@ namespace GridBlazor.Pages
                 {
                     var values = ((ICGridColumn)column).GetSubGridKeyValues(Item);
                     var grid = await ((ICGridColumn)column).SubGrids(values.Values.ToArray(), true, true, true, true) as ICGrid;
+                    grid.Direction = GridComponent.Grid.Direction;
                     grid.FixedValues = values;
-                    _renderFragments.Add(column.Name, CreateSubGridComponent(grid));
+                    VariableReference reference = new VariableReference();
+                    if(Children.ContainsKey(column.Name))
+                        Children[column.Name] = reference;
+                    else
+                        Children.Add(column.Name, reference);
+                    if (_renderFragments.ContainsKey(column.Name))
+                        _renderFragments[column.Name] = CreateSubGridComponent(grid, reference);
+                    else
+                        _renderFragments.Add(column.Name, CreateSubGridComponent(grid, reference));
                 }
                 else if (column.UpdateComponentType != null)
                 {
-                    _renderFragments.Add(column.Name, GridCellComponent<T>.CreateComponent(_sequence,
-                        column.UpdateComponentType, column, Item, null, true));
+                    VariableReference reference = new VariableReference();
+                    if (Children.ContainsKey(column.Name))
+                        Children[column.Name] = reference;
+                    else
+                        Children.Add(column.Name, reference);
+                    if (_renderFragments.ContainsKey(column.Name))
+                        _renderFragments[column.Name] = GridCellComponent<T>.CreateComponent(_sequence,
+                            GridComponent, column.UpdateComponentType, column, Item, null, true, reference);
+                    else
+                        _renderFragments.Add(column.Name, GridCellComponent<T>.CreateComponent(_sequence,
+                            GridComponent, column.UpdateComponentType, column, Item, null, true, reference));
                 }
             }
             _tabGroups = GridComponent.Grid.Columns
                 .Where(r => !string.IsNullOrWhiteSpace(r.TabGroup) && _renderFragments.Keys.Any(s => s.Equals(r.Name)))
                 .Select(r => r.TabGroup).Distinct();
 
+            if (((CGrid<T>)GridComponent.Grid).ButtonCrudComponents != null && ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Count() > 0)
+            {
+                foreach (var key in ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Keys)
+                {
+                    var buttonCrudComponent = ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Get(key);
+                    if ((buttonCrudComponent.UpdateMode != null && buttonCrudComponent.UpdateMode(Item)) ||
+                        (buttonCrudComponent.UpdateModeAsync != null && await buttonCrudComponent.UpdateModeAsync(Item)) ||
+                        (buttonCrudComponent.GridMode.HasFlag(GridMode.Update)))
+                    {
+                        _buttonCrudComponentVisibility.Add(key, true);
+                    }
+                    else
+                    {
+                        _buttonCrudComponentVisibility.Add(key, false);
+                    }
+                }
+            }
+
             _shouldRender = true;
         }
 
-        private RenderFragment CreateSubGridComponent(ICGrid grid) => builder =>
+        private RenderFragment CreateSubGridComponent(ICGrid grid, VariableReference reference) => builder =>
         {
             Type gridComponentType = typeof(GridComponent<>).MakeGenericType(grid.Type);
             builder.OpenComponent(++_sequence, gridComponentType);
             builder.AddAttribute(++_sequence, "Grid", grid);
+            builder.AddComponentReferenceCapture(++_sequence, r => reference.Variable = r);
             builder.CloseComponent();
         };
 
@@ -127,8 +180,29 @@ namespace GridBlazor.Pages
             }
         }
 
+        private void OnFileChange(IGridColumn column, IFileListEntry[] files)
+        {
+            if (!column.MultipleInput && files.Length > 1)
+                files = new IFileListEntry[] { files[0] };
+
+            if (Files.ContainsKey(column.FieldName))
+                Files[column.FieldName] = files;
+            else
+                Files.Add(column.FieldName, files);
+
+            _shouldRender = true;
+            StateHasChanged();
+        }
+
         protected async Task UpdateItem()
         {
+            if (GridComponent.Grid.UpdateConfirmation && _code != _confirmationCode)
+            {
+                _shouldRender = true;
+                Error = Strings.ConfirmCodeError;
+                return;
+            }
+
             try
             {
                 Error = "";
@@ -148,6 +222,17 @@ namespace GridBlazor.Pages
                 await OnParametersSetAsync();
                 _shouldRender = true;
                 Error = Strings.UpdateError;
+            }
+        }
+
+        protected async Task ButtonFileClicked(string fieldName)
+        {
+            var inputFile = InputFiles.Get(fieldName);
+            var type = inputFile.Variable.GetType();
+            if (type == typeof(Agno.BlazorInputFile.InputFile) 
+                && ((Agno.BlazorInputFile.InputFile)inputFile.Variable).InputFileElement.Id != null)
+            {
+                await jSRuntime.InvokeVoidAsync("gridJsFunctions.click", (ElementReference)((Agno.BlazorInputFile.InputFile)inputFile.Variable).InputFileElement);
             }
         }
 

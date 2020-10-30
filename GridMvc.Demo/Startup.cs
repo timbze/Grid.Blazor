@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Globalization;
+using GridShared.Data;
 
 namespace GridMvc.Demo
 {
@@ -29,7 +29,7 @@ namespace GridMvc.Demo
         {
             services.AddDbContext<NorthwindDbContext>(options =>
             {
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+                options.UseGridBlazorDatabase();
                 //options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.QueryClientEvaluationWarning));
             });
 
@@ -50,6 +50,7 @@ namespace GridMvc.Demo
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IEmployeeService, EmployeeService>();
+            services.AddScoped<IEmployeeFileService, EmployeeFileService>();
             services.AddScoped<IShipperService, ShipperService>();
 
             services.Configure<RequestLocalizationOptions>(
@@ -67,7 +68,15 @@ namespace GridMvc.Demo
                             new CultureInfo("nl-NL"),
                             new CultureInfo("tr-TR"),
                             new CultureInfo("cs-CZ"),
-                            new CultureInfo("sl-SI")
+                            new CultureInfo("sl-SI"),
+                            new CultureInfo("se-SE"),
+                            new CultureInfo("sr-Cyrl-RS"),
+                            new CultureInfo("hr-HR"),
+                            new CultureInfo("fa-IR"),
+                            new CultureInfo("ca-ES"),
+                            new CultureInfo("gl-ES"),
+                            new CultureInfo("eu-ES"),
+                            new CultureInfo("pt-BR")
                         };
 
                     options.DefaultRequestCulture = new RequestCulture(culture: "en-US", uiCulture: "en-US");
@@ -100,6 +109,7 @@ namespace GridMvc.Demo
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapDefaultControllerRoute();
+                endpoints.MapRazorPages();
                 endpoints.MapBlazorHub();
             });
         }

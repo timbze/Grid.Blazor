@@ -1,13 +1,15 @@
-﻿@using GridBlazor.Columns
+﻿@using Agno.BlazorInputFile
+@using GridBlazor.Columns
 @using GridBlazor.Resources
 @using GridShared
 @using GridShared.Columns
+@using GridShared.Utility
 
 @typeparam T
 
-<h1>@Strings.Add</h1>
+<div class="@GridComponent.GridCrudHeaderCssClass">@(string.IsNullOrWhiteSpace(GridComponent.Grid.CreateFormLabel) ? Strings.Add : GridComponent.Grid.CreateFormLabel)</div>
 
-<EditForm Model="@Item" OnValidSubmit="@CreateItem">
+<EditForm Model="@Item" OnValidSubmit="@CreateItem" @ref="Form">
     <DataAnnotationsValidator />
     <ValidationSummary />
     <p id="error" style="color:red;">@Error</p>
@@ -24,18 +26,22 @@
                 }
 
                 (Type type, object value) = ((IGridColumn<T>)column).GetTypeAndValue(Item);
+                if (type == null && ((IGridColumn<T>)column).InputType != InputType.File)
+                {
+                    continue;
+                }
                 <div class="form-group row" style="@(column.CrudHidden.HasFlag(CrudHidden.CREATE)?"display:none;":"")">
                     @if (!string.IsNullOrWhiteSpace(column.TooltipValue))
                     {
-                        <div class="col-md-2">
-                            <FormTooltipComponent Column="@column"></FormTooltipComponent>
+                        <div class="col-md-@column.CrudLabelWidth.ToString()">
+                            <FormTooltipComponent T="@T" Column="@column"></FormTooltipComponent>
                         </div>
                     }
                     else
                     {
-                        <label for="@column.FieldName" class="col-form-label col-md-2">@column.Title</label>
+                        <label for="@column.FieldName" class="col-form-label col-md-@column.CrudLabelWidth.ToString()">@column.Title</label>
                     }
-                    <div class="@(type == typeof(bool)?"col-md-1":"col-md-5")">
+                    <div class="@(type == typeof(bool) ? "col-md-1" : "col-md-" + column.CrudWidth.ToString())">
                         @if (((IGridColumn<T>)column).IsSelectField.IsSelectKey)
                         {
                             var selectedValue = column.GetFormatedValue(value);
@@ -63,6 +69,41 @@
                             else if (type == typeof(string) && ((IGridColumn<T>)column).InputType == InputType.TextArea)
                             {
                                 <textarea id="@column.FieldName" name="@column.FieldName" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" rows="5" value="@column.GetFormatedValue(value)" @onchange="(e) => ChangeValue(e, column)" />
+                            }
+                            else if (((IGridColumn<T>)column).InputType == InputType.File)
+                            {
+                                if (Files.ContainsKey(column.FieldName))
+                                {
+                                    value = string.Join(";", Files[column.FieldName].Select(r => r.Name));
+                                }
+                                else
+                                {
+                                    value = "";
+                                }
+                                VariableReference reference;
+                                if (InputFiles.ContainsKey(column.FieldName))
+                                {
+                                    reference = InputFiles[column.FieldName];
+                                }
+                                else
+                                {
+                                    reference = new VariableReference();
+                                    InputFiles.Add(column.FieldName, reference);
+                                }
+                                <div class="input-group">
+                                    <input type="text" id="@column.FieldName" name="@column.FieldName" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" value="@column.GetFormatedValue(value)">
+                                    <span class="input-group-btn">
+                                        <button type="button" class="btn btn-default btn-outline-secondary grid-button-input-file" @onclick="() => ButtonFileClicked(column.FieldName)">@Strings.Files</button>
+                                    </span>
+                                    @if (column.MultipleInput)
+                                    {
+                                        <Agno.BlazorInputFile.InputFile name="@(column.FieldName + "-file")" multiple style="display:none;" @ref="reference.Variable" OnFileChange="(files) => OnFileChange(column, files)" />
+                                    }
+                                    else
+                                    {
+                                        <Agno.BlazorInputFile.InputFile name="@(column.FieldName + "-file")" style="display:none;" @ref="reference.Variable" OnFileChange="(files) => OnFileChange(column, files)" />
+                                    }
+                                </div>
                             }
                             else if (type == typeof(DateTime) || type == typeof(System.DateTimeOffset))
                             {
@@ -137,18 +178,25 @@
                 <div class="form-group row" style="@(column.CrudHidden.HasFlag(CrudHidden.CREATE) ? "display:none;" : "")">
                     @if (!string.IsNullOrWhiteSpace(column.TooltipValue))
                     {
-                        <div class="col-md-2">
-                            <FormTooltipComponent Column="@column"></FormTooltipComponent>
+                        <div class="col-md-@column.CrudLabelWidth.ToString()">
+                            <FormTooltipComponent T="@T" Column="@column"></FormTooltipComponent>
                         </div>
                     }
                     else
                     {
-                        <label class="col-form-label col-md-2">@column.Title</label>
+                        <label class="col-form-label col-md-@column.CrudLabelWidth.ToString()">@column.Title</label>
                     }
-                    <div class="col-md-10">
-                        <div class="card panel panel-default">
-                            <div class="card-body panel-body">@_renderFragments.Get(column.Name)</div>
-                        </div>
+                    <div class="col-md-@((12 - column.CrudLabelWidth).ToString())">
+                        @if (column.EnableCard)
+                        {
+                            <div class="card panel panel-default">
+                                <div class="card-body panel-body">@_renderFragments.Get(column.Name)</div>
+                            </div>
+                        }
+                        else
+                        {
+                            @_renderFragments.Get(column.Name)
+                        }
                     </div>
                 </div>
             }
@@ -158,11 +206,12 @@
         {
             foreach (var tabGruop in _tabGroups)
             {
-                var tabLabels = GridComponent.Grid.Columns
-                    .Where(r => r.TabGroup != null && r.TabGroup.Equals(tabGruop) && _renderFragments.Keys.Any(s => s.Equals(r.Name)))
-                    .Select(r => new SelectItem(r.Name, r.Title));
+                var columns = GridComponent.Grid.Columns
+                    .Where(r => r.TabGroup != null && r.TabGroup.Equals(tabGruop) && _renderFragments.Keys.Any(s => s.Equals(r.Name)));
+                var tabLabels = columns.Select(r => new SelectItem(r.Name, r.Title));
+                var column = columns.FirstOrDefault();
                 <div class="form-group row">
-                    <div class="col-md-offset-2 offset-md-2 col-md-10">
+                    <div class="col-md-offset-@(column.CrudLabelWidth.ToString()) offset-md-@(column.CrudLabelWidth.ToString()) col-md-@((12 - column.CrudLabelWidth).ToString())">
                         <div class="card panel panel-default">
                             <div class="card-body panel-body">
                                 <GridTabComponent TabLabels="@tabLabels" TabContent="@_renderFragments" />
@@ -173,10 +222,45 @@
             }
         }
 
-        <div class="form-group row">
-            <div class="col-md-5">
+        @if (GridComponent.Grid.CreateConfirmation)
+        {
+            <div class="form-group row">
+                <label class="col-form-label col-md-@GridComponent.Grid.CreateConfirmationLabelWidth.ToString()">@Strings.Code</label>
+                <div class="col-md-@GridComponent.Grid.CreateConfirmationWidth.ToString()">
+                    <input class="form-control" id="code" name="code" readonly="readonly" type="text" @bind="_code">
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label class="col-form-label col-md-@GridComponent.Grid.CreateConfirmationLabelWidth.ToString()">@Strings.Confirm_Code</label>
+                <div class="col-md-@GridComponent.Grid.CreateConfirmationWidth.ToString()">
+                    <input class="form-control" id="confirm_code" name="confirm_code" type="text" @bind="_confirmationCode">
+                </div>
+            </div>
+        }
+
+        <div style="display:flex;">
+            <div>
                 <button type="submit" class="btn btn-primary btn-md">@Strings.Save</button>
                 <button type="button" class="btn btn-primary btn-md" @onclick="() => BackButtonClicked()">@Strings.Back</button>
+                @if (((CGrid<T>)GridComponent.Grid).ButtonCrudComponents != null && ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Count() > 0)
+                {
+                    @foreach (var key in ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Keys)
+                    {
+                        var buttonCrudComponent = ((CGrid<T>)GridComponent.Grid).ButtonCrudComponents.Get(key);
+                        if (buttonCrudComponent.GridMode.HasFlag(GridMode.Create))
+                        {
+                            if (buttonCrudComponent.Content.HasValue)
+                            {
+                                <button class="btn btn-primary btn-md" type="button" title="@buttonCrudComponent.Label" @onclick="() => GridComponent.ButtonCrudComponentHandler(key)" @onclick:stopPropagation>@buttonCrudComponent.Content.Value</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-primary btn-md" type="button" title="@buttonCrudComponent.Label" @onclick="() => GridComponent.ButtonCrudComponentHandler(key)" @onclick:stopPropagation>@buttonCrudComponent.Label</button>
+                            }
+                        }
+                    }
+                }
             </div>
         </div>
     </div>

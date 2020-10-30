@@ -255,4 +255,28 @@
   <data name="IsNull" xml:space="preserve">
     <value>Es nulo</value>
   </data>
+  <data name="SelectionDeleteError" xml:space="preserve">
+    <value>Se debe seleccionar la fila que se quiere borrar</value>
+  </data>
+  <data name="SelectionReadError" xml:space="preserve">
+    <value>Se debe seleccionar la fila que se quiere visualizar</value>
+  </data>
+  <data name="SelectionUpdateError" xml:space="preserve">
+    <value>Se debe seleccionar la fila que se quiere editar</value>
+  </data>
+  <data name="Files" xml:space="preserve">
+    <value>Archivos</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Código</value>
+  </data>
+  <data name="Confirm Code" xml:space="preserve">
+    <value>Confirmar Código</value>
+  </data>
+  <data name="ConfirmCodeError" xml:space="preserve">
+    <value>El código y el código de confirmación deben ser iguales para guardar este artículo</value>
+  </data>
+  <data name="DeleteConfirmCodeError" xml:space="preserve">
+    <value>El código y el código de confirmación deben ser iguales para eliminar este elemento</value>
+  </data>
 </root>

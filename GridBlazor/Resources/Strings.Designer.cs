@@ -126,6 +126,33 @@ namespace GridBlazor.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Code.
+        /// </summary>
+        public static string Code {
+            get {
+                return ResourceManager.GetString("Code", System.Globalization.CultureInfo.CurrentCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Confirm Code.
+        /// </summary>
+        public static string Confirm_Code {
+            get {
+                return ResourceManager.GetString("Confirm Code", System.Globalization.CultureInfo.CurrentCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Code and confirmation code must be equal to save this item.
+        /// </summary>
+        public static string ConfirmCodeError {
+            get {
+                return ResourceManager.GetString("ConfirmCodeError", System.Globalization.CultureInfo.CurrentCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Contains.
         /// </summary>
         public static string Contains {
@@ -167,6 +194,15 @@ namespace GridBlazor.Resources {
         public static string Delete {
             get {
                 return ResourceManager.GetString("Delete", System.Globalization.CultureInfo.CurrentCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Code and confirmation code must be equal to delete this item.
+        /// </summary>
+        public static string DeleteConfirmCodeError {
+            get {
+                return ResourceManager.GetString("DeleteConfirmCodeError", System.Globalization.CultureInfo.CurrentCulture);
             }
         }
         
@@ -221,6 +257,15 @@ namespace GridBlazor.Resources {
         public static string ExtSortingText {
             get {
                 return ResourceManager.GetString("ExtSortingText", System.Globalization.CultureInfo.CurrentCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Files.
+        /// </summary>
+        public static string Files {
+            get {
+                return ResourceManager.GetString("Files", System.Globalization.CultureInfo.CurrentCulture);
             }
         }
         
@@ -392,6 +437,33 @@ namespace GridBlazor.Resources {
         public static string SearchFor {
             get {
                 return ResourceManager.GetString("SearchFor", System.Globalization.CultureInfo.CurrentCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You must select the row you want to delete.
+        /// </summary>
+        public static string SelectionDeleteError {
+            get {
+                return ResourceManager.GetString("SelectionDeleteError", System.Globalization.CultureInfo.CurrentCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You must select the row you want to view.
+        /// </summary>
+        public static string SelectionReadError {
+            get {
+                return ResourceManager.GetString("SelectionReadError", System.Globalization.CultureInfo.CurrentCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You must select the row you want to edit.
+        /// </summary>
+        public static string SelectionUpdateError {
+            get {
+                return ResourceManager.GetString("SelectionUpdateError", System.Globalization.CultureInfo.CurrentCulture);
             }
         }
         

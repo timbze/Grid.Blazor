@@ -1,5 +1,8 @@
 ﻿@using GridBlazor.Resources
+@using GridShared
 @using GridShared.Columns
+
+@typeparam T
 
 @if (Grid != null && !Grid.ComponentOptions.RenderRowsOnly)
 {
@@ -12,21 +15,21 @@
             {
                 <td class="grid-cell" data-name="" style="width:36.5px;"></td>
             }
-            @if (Grid.ReadEnabled)
+            @if ((Grid.ReadEnabled || ((CGrid<T>)Grid).FuncReadEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
-            @if (Grid.UpdateEnabled)
+            @if ((Grid.UpdateEnabled || ((CGrid<T>)Grid).FuncUpdateEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
-            @if (Grid.DeleteEnabled)
+            @if ((Grid.DeleteEnabled || ((CGrid<T>)Grid).FuncDeleteEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
             @if (firstColumn != null
-                && (firstColumn.IsSumEnabled || firstColumn.IsAverageEnabled
-                || firstColumn.IsMaxEnabled || firstColumn.IsMinEnabled))
+              && (firstColumn.IsSumEnabled || firstColumn.IsAverageEnabled
+              || firstColumn.IsMaxEnabled || firstColumn.IsMinEnabled))
             {
                 <td class="grid-cell" style="width:90px;"><b>@Strings.Sum</b></td>
             }
@@ -38,6 +41,8 @@
                     cssStyles = ((GridStyledColumn)column).GetCssStylesString() + " " + TdStyle;
                 else
                     cssStyles = ((GridStyledColumn)column).GetCssStylesString();
+                if (Grid.Direction == GridDirection.RTL)
+                    cssStyles = string.Concat(cssStyles, " text-align:right;direction:rtl;").Trim();
                 if (!string.IsNullOrWhiteSpace(((IGridColumn)column).Width))
                     cssStyles = string.Concat(cssStyles, " width:", ((IGridColumn)column).Width, ";").Trim();
                 if (i == 0 && !column.IsSumEnabled && !column.IsAverageEnabled
@@ -67,21 +72,21 @@
             {
                 <td class="grid-cell" data-name="" style="width:36.5px;"></td>
             }
-            @if (Grid.ReadEnabled)
+            @if ((Grid.ReadEnabled || ((CGrid<T>)Grid).FuncReadEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
-            @if (Grid.UpdateEnabled)
+            @if ((Grid.UpdateEnabled || ((CGrid<T>)Grid).FuncUpdateEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
-            @if (Grid.DeleteEnabled)
+            @if ((Grid.DeleteEnabled || ((CGrid<T>)Grid).FuncDeleteEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
             @if (firstColumn != null
-                && (firstColumn.IsSumEnabled || firstColumn.IsAverageEnabled
-                || firstColumn.IsMaxEnabled || firstColumn.IsMinEnabled))
+              && (firstColumn.IsSumEnabled || firstColumn.IsAverageEnabled
+              || firstColumn.IsMaxEnabled || firstColumn.IsMinEnabled))
             {
                 <td class="grid-cell" style="width:90px;"><b>@Strings.Average</b></td>
             }
@@ -93,6 +98,8 @@
                     cssStyles = ((GridStyledColumn)column).GetCssStylesString() + " " + TdStyle;
                 else
                     cssStyles = ((GridStyledColumn)column).GetCssStylesString();
+                if (Grid.Direction == GridDirection.RTL)
+                    cssStyles = string.Concat(cssStyles, " text-align:right;direction:rtl;").Trim();
                 if (!string.IsNullOrWhiteSpace(((IGridColumn)column).Width))
                     cssStyles = string.Concat(cssStyles, " width:", ((IGridColumn)column).Width, ";").Trim();
                 if (i == 0 && !column.IsSumEnabled && !column.IsAverageEnabled
@@ -121,21 +128,21 @@
             {
                 <td class="grid-cell" data-name="" style="width:36.5px;"></td>
             }
-            @if (Grid.ReadEnabled)
+            @if ((Grid.ReadEnabled || ((CGrid<T>)Grid).FuncReadEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
-            @if (Grid.UpdateEnabled)
+            @if ((Grid.UpdateEnabled || ((CGrid<T>)Grid).FuncUpdateEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
-            @if (Grid.DeleteEnabled)
+            @if ((Grid.DeleteEnabled || ((CGrid<T>)Grid).FuncDeleteEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
             @if (firstColumn != null
-                && (firstColumn.IsSumEnabled || firstColumn.IsAverageEnabled
-                || firstColumn.IsMaxEnabled || firstColumn.IsMinEnabled))
+              && (firstColumn.IsSumEnabled || firstColumn.IsAverageEnabled
+              || firstColumn.IsMaxEnabled || firstColumn.IsMinEnabled))
             {
                 <td class="grid-cell" style="width:90px;"><b>@Strings.Max</b></td>
             }
@@ -147,6 +154,8 @@
                     cssStyles = ((GridStyledColumn)column).GetCssStylesString() + " " + TdStyle;
                 else
                     cssStyles = ((GridStyledColumn)column).GetCssStylesString();
+                if (Grid.Direction == GridDirection.RTL)
+                    cssStyles = string.Concat(cssStyles, " text-align:right;direction:rtl;").Trim();
                 if (!string.IsNullOrWhiteSpace(((IGridColumn)column).Width))
                     cssStyles = string.Concat(cssStyles, " width:", ((IGridColumn)column).Width, ";").Trim();
                 if (i == 0 && !column.IsSumEnabled && !column.IsAverageEnabled
@@ -175,21 +184,21 @@
             {
                 <td class="grid-cell" data-name="" style="width:36.5px;"></td>
             }
-            @if (Grid.ReadEnabled)
+            @if ((Grid.ReadEnabled || ((CGrid<T>)Grid).FuncReadEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
-            @if (Grid.UpdateEnabled)
+            @if ((Grid.UpdateEnabled || ((CGrid<T>)Grid).FuncUpdateEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
-            @if (Grid.DeleteEnabled)
+            @if ((Grid.DeleteEnabled || ((CGrid<T>)Grid).FuncDeleteEnabled != null) && !GridComponent.HeaderCrudButtons)
             {
                 <td class="grid-cell" data-name="" style="width:35px;"></td>
             }
             @if (firstColumn != null
-                && (firstColumn.IsSumEnabled || firstColumn.IsAverageEnabled
-                || firstColumn.IsMaxEnabled || firstColumn.IsMinEnabled))
+              && (firstColumn.IsSumEnabled || firstColumn.IsAverageEnabled
+              || firstColumn.IsMaxEnabled || firstColumn.IsMinEnabled))
             {
                 <td class="grid-cell" style="width:90px;"><b>@Strings.Min</b></td>
             }
@@ -201,6 +210,8 @@
                     cssStyles = ((GridStyledColumn)column).GetCssStylesString() + " " + TdStyle;
                 else
                     cssStyles = ((GridStyledColumn)column).GetCssStylesString();
+                if (Grid.Direction == GridDirection.RTL)
+                    cssStyles = string.Concat(cssStyles, " text-align:right;direction:rtl;").Trim();
                 if (!string.IsNullOrWhiteSpace(((IGridColumn)column).Width))
                     cssStyles = string.Concat(cssStyles, " width:", ((IGridColumn)column).Width, ";").Trim();
                 if (i == 0 && !column.IsSumEnabled && !column.IsAverageEnabled

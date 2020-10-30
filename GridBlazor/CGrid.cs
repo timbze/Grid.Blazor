@@ -2,6 +2,7 @@ using GridBlazor.Columns;
 using GridBlazor.DataAnnotations;
 using GridBlazor.Filtering;
 using GridBlazor.OData;
+using GridBlazor.Pages;
 using GridBlazor.Pagination;
 using GridBlazor.Resources;
 using GridBlazor.Searching;
@@ -11,6 +12,7 @@ using GridShared.Columns;
 using GridShared.DataAnnotations;
 using GridShared.Filtering;
 using GridShared.Utility;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Primitives;
 using Microsoft.JSInterop;
 using System;
@@ -108,13 +110,6 @@ namespace GridBlazor
             EmptyGridText = Strings.DefaultGridEmptyText;
             Language = Strings.Lang;
 
-            _currentPagerODataProcessor = new PagerGridODataProcessor<T>(this);
-            _currentSortODataProcessor = new SortGridODataProcessor<T>(this, _settings.SortSettings);
-            _currentFilterODataProcessor = new FilterGridODataProcessor<T>(this, _settings.FilterSettings,
-                _settings.SearchSettings);
-            _currentSearchODataProcessor = new SearchGridODataProcessor<T>(this, _settings.SearchSettings);
-            _currentExpandODataProcessor = new ExpandGridODataProcessor<T>(this);
-
             _annotations = new GridAnnotationsProvider();
 
             //Set up column collection:
@@ -126,6 +121,14 @@ namespace GridBlazor
             ComponentOptions = new GridOptions();
 
             ApplyGridSettings();
+            SetInitSorting();
+
+            _currentPagerODataProcessor = new PagerGridODataProcessor<T>(this);
+            _currentSortODataProcessor = new SortGridODataProcessor<T>(this, _settings.SortSettings);
+            _currentFilterODataProcessor = new FilterGridODataProcessor<T>(this, _settings.FilterSettings,
+                _settings.SearchSettings);
+            _currentSearchODataProcessor = new SearchGridODataProcessor<T>(this, _settings.SearchSettings);
+            _currentExpandODataProcessor = new ExpandGridODataProcessor<T>(this);
 
             Pager = new GridPager(query);
 
@@ -138,8 +141,13 @@ namespace GridBlazor
             UpdateEnabled = false;
             DeleteEnabled = false;
 
-            ButtonComponents = new QueryDictionary<(string Label, Type ComponentType, IList<Action<object>> Actions,
-                IList<Func<object, Task>> Functions, object Object)>();
+            ButtonComponents = new QueryDictionary<(string Label, Nullable<MarkupString> Content, Type ComponentType, 
+                IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)>();
+
+            ButtonCrudComponents = new QueryDictionary<(string Label, Nullable<MarkupString> Content, Type ComponentType, 
+                GridMode GridMode, Func<T, bool> ReadMode, Func<T, bool> UpdateMode, Func<T, bool> DeleteMode,
+                Func<T, Task<bool>> ReadModeAsync, Func<T, Task<bool>> UpdateModeAsync, Func<T, Task<bool>> DeleteModeAsync,
+                IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)>();
         }
 
         /// <summary>
@@ -253,6 +261,7 @@ namespace GridBlazor
         private void UpdateQueryAndSettings()
         {
             _settings = new QueryStringGridSettingsProvider(_query);
+            SetInitSorting();
             _columnsCollection.SortSettings = _settings.SortSettings;
             _columnsCollection.UpdateColumnsSorting();
             ((GridPager)_pager).Query = _query;
@@ -260,6 +269,25 @@ namespace GridBlazor
             _currentSortODataProcessor.UpdateSettings(_settings.SortSettings);
             _currentFilterODataProcessor.UpdateSettings(_settings.FilterSettings, _settings.SearchSettings);
             _currentSearchODataProcessor.UpdateSettings(_settings.SearchSettings);
+        }
+
+        // keeps initial sorting on the client for OData grids
+        private void SetInitSorting()
+        {
+            string[] sortings = Query.Get(((QueryStringSortSettings)_settings.SortSettings).ColumnQueryParameterName).Count > 0 ?
+                Query.Get(((QueryStringSortSettings)_settings.SortSettings).ColumnQueryParameterName).ToArray() : null;
+
+            if ((_settings.SortSettings.SortValues == null || _settings.SortSettings.SortValues.Count == 0)
+                && (sortings == null || sortings.Length == 0)
+                && string.IsNullOrWhiteSpace(_settings.SortSettings.ColumnName))
+            {
+                var column = _columnsCollection.FirstOrDefault(r => ((ICGridColumn)r).InitialDirection.HasValue);
+                if (column != null)
+                {
+                    _settings.SortSettings.ColumnName = column.Name;
+                    _settings.SortSettings.Direction = ((ICGridColumn)column).InitialDirection.Value;
+                }
+            }  
         }
 
         /// <summary>
@@ -299,6 +327,11 @@ namespace GridBlazor
             }
             set { _crudDataService = value; }
         }
+
+        /// <summary>
+        ///     Provides CrudFileService used by the grid
+        /// </summary>
+        public ICrudFileService<T> CrudFileService { get; set; }
 
         /// <summary>
         ///     Provides query, using by the grid
@@ -353,9 +386,24 @@ namespace GridBlazor
         public GridMode Mode { get; internal set; }
 
         /// <summary>
+        ///     Grid direction
+        /// </summary>
+        public GridDirection Direction { get; set; } = GridDirection.LTR;
+
+        /// <summary>
         ///     Get and set export to an Excel file
         /// </summary>
         public bool ExcelExport { get; internal set; }
+
+        /// <summary>
+        ///     Get and set export all rows to an Excel file
+        /// </summary>
+        public bool ExcelExportAllRows { get; internal set; }
+
+        /// <summary>
+        ///     Get and set Excel file name
+        /// </summary>
+        public string ExcelExportFileName { get; internal set; }
 
         /// <summary>
         ///     Get value for creating items
@@ -368,14 +416,29 @@ namespace GridBlazor
         public bool ReadEnabled { get; internal set; }
 
         /// <summary>
+        ///     Get value for reading items
+        /// </summary>
+        public Func<T, bool> FuncReadEnabled { get; internal set; }
+
+        /// <summary>
         ///     Get value for updating items
         /// </summary>
         public bool UpdateEnabled { get; internal set; }
 
         /// <summary>
+        ///     Get value for updating items
+        /// </summary>
+        public Func<T, bool> FuncUpdateEnabled { get; internal set; }
+
+        /// <summary>
         ///     Get value for deleting items
         /// </summary>
         public bool DeleteEnabled { get; internal set; }
+
+        /// <summary>
+        ///     Get value for deleting items
+        /// </summary>
+        public Func<T, bool> FuncDeleteEnabled { get; internal set; }
 
         /// <summary>
         ///     Get and set custom create component
@@ -421,8 +484,10 @@ namespace GridBlazor
 
         public object DeleteObject { get; internal set; }
 
-        public QueryDictionary<(string Label, Type ComponentType, IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)> ButtonComponents { get; internal set; }
+        public QueryDictionary<(string Label, Nullable<MarkupString> Content, Type ComponentType, IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)> ButtonComponents { get; internal set; }
 
+        public QueryDictionary<(string Label, Nullable<MarkupString> Content, Type ComponentType, GridMode GridMode, Func<T,bool> ReadMode, Func<T, bool> UpdateMode, Func<T, bool> DeleteMode, Func<T, Task<bool>> ReadModeAsync, Func<T, Task<bool>> UpdateModeAsync, Func<T, Task<bool>> DeleteModeAsync, IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)> ButtonCrudComponents { get; internal set; }
+        
         public bool Keyboard { get; internal set; } = false;
 
         public ModifierKey ModifierKey { get; internal set; } = ModifierKey.CtrlKey;
@@ -510,6 +575,16 @@ namespace GridBlazor
         public IEnumerable<string> ODataExpandList { get; set; }
 
         /// <summary>
+        ///     Override OData url expand parameter with list
+        /// </summary>
+        public bool ODataOverrideExpandList { get; set; } = false;
+
+        /// <summary>
+        ///    Add code to the end of OnAfterRenderAsync method of the component
+        /// </summary>
+        public Func<GridComponent<T>, bool, Task> OnAfterRender { get; set; }
+
+        /// <summary>
         ///     Applies data annotations settings
         /// </summary>
         private void ApplyGridSettings()
@@ -531,12 +606,57 @@ namespace GridBlazor
         /// </summary>
         public virtual void AutoGenerateColumns()
         {
-            //TODO add support order property
             PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            // if any property has a position attribute it's necessary 
+            // to create a new array before adding columns to the collection
+            if (properties.SelectMany(r => r.CustomAttributes).SelectMany(r => r.NamedArguments).Any(r => r.MemberName == "Position"))
+            {
+                PropertyInfo[] newProperties = new PropertyInfo[properties.Length];
+                foreach (PropertyInfo pi in properties)
+                {
+                    int? position = null;
+                    if (pi.CustomAttributes.Count() > 0)
+                    {
+                        foreach (var a in pi.CustomAttributes)
+                        {
+                            if (a.NamedArguments.Any(r => r.MemberName == "Position"))
+                            {
+                                position = (int)a.NamedArguments.First(r => r.MemberName == "Position").TypedValue.Value;
+                            }
+                        }
+                    }
+                    if (position.HasValue)
+                        newProperties[position.Value] = pi;
+                }
+                properties = newProperties;
+            }
+
             foreach (PropertyInfo pi in properties)
             {
+                bool isKey = false;
+                if (pi.CustomAttributes.Count() > 0)
+                {
+                    foreach (var a in pi.CustomAttributes)
+                    {
+                        if (a.AttributeType.Name.Equals("KeyAttribute"))
+                        {
+                            isKey = true;
+                        }
+                    }
+                }
+
                 if (pi.CanRead)
-                    ((IGridColumnCollection<T>)Columns).Add(pi);
+                {
+                    if (isKey)
+                    {
+                        Columns.Add(pi).SetPrimaryKey(true);
+                    }
+                    else
+                    {
+                        Columns.Add(pi);
+                    }
+                }
             }
         }
 
@@ -544,6 +664,83 @@ namespace GridBlazor
         ///     Text in empty grid (no items for display)
         /// </summary>
         public string EmptyGridText { get; set; }
+
+        /// <summary>
+        ///     Create button label
+        /// </summary>
+        public string CreateLabel { get; set; }
+
+        /// <summary>
+        ///     Read button label
+        /// </summary>
+        public string ReadLabel { get; set; }
+
+        /// <summary>
+        ///     Update button label
+        /// </summary>
+        public string UpdateLabel { get; set; }
+
+        /// <summary>
+        ///     Delete button label
+        /// </summary>
+        public string DeleteLabel { get; set; }
+
+        /// <summary>
+        ///     Create form label
+        /// </summary>
+        public string CreateFormLabel { get; set; }
+
+        /// <summary>
+        ///     Read form label
+        /// </summary>
+        public string ReadFormLabel { get; set; }
+
+        /// <summary>
+        ///     Update form label
+        /// </summary>
+        public string UpdateFormLabel { get; set; }
+
+        /// <summary>
+        ///     Delete form label
+        /// </summary>
+        public string DeleteFormLabel { get; set; }
+
+        // <summary>
+        ///     Create CRUD confirmation fields
+        /// </summary>
+        public bool CreateConfirmation { get; set; } = false;
+
+        public int CreateConfirmationWidth { get; set; } = 5;
+
+        public int CreateConfirmationLabelWidth { get; set; } = 2;
+
+        /// <summary>
+        ///     Update CRUD confirmation fields
+        /// </summary>
+        public bool UpdateConfirmation { get; set; } = false;
+
+        public int UpdateConfirmationWidth { get; set; } = 5;
+
+        public int UpdateConfirmationLabelWidth { get; set; } = 2;
+
+        /// <summary>
+        ///     Delete CRUD confirmation fields
+        /// </summary>
+        public bool DeleteConfirmation { get; set; } = false;
+
+        public int DeleteConfirmationWidth { get; set; } = 5;
+
+        public int DeleteConfirmationLabelWidth { get; set; } = 2;
+
+        public bool HeaderCrudButtons { get; set; }
+
+        public bool ShowErrorsOnGrid { get; set; } = false;
+
+        public bool ThrowExceptions { get; set; } = false;
+
+        public string Error { get; set; } = "";
+
+        public bool EditAfterInsert { get; set; } = false;
 
         #region Custom row css classes
         public void SetRowCssClassesContraint(Func<T, string> contraint)
@@ -786,13 +983,28 @@ namespace GridBlazor
             if (ExcelExport)
             {
                 ExcelWriter excelWriter = new ExcelWriter();
-                byte[] content = excelWriter.GenerateExcel(Columns, Items);
+                byte[] content;
+                if (ExcelExportAllRows)
+                {
+                    var oldPageSize = Pager.PageSize;
+                    Pager.PageSize = ItemsCount;
+                    AddQueryParameter(GridPager.DefaultPageSizeQueryParameter, ItemsCount.ToString());
+                    await UpdateGrid();
+                    content = excelWriter.GenerateExcel(Columns, Items);
+                    Pager.PageSize = oldPageSize;
+                    AddQueryParameter(GridPager.DefaultPageSizeQueryParameter, oldPageSize.ToString());
+                    await UpdateGrid();
+                }
+                else
+                    content = excelWriter.GenerateExcel(Columns, Items);
                 await js.InvokeAsync<object>("gridJsFunctions.saveAsFile", filename, Convert.ToBase64String(content));
             }
         }
 
         public async Task UpdateGrid()
         {
+            Error = "";
+
             if (ServerAPI == ServerAPI.OData)
                 await GetOData();
             else
@@ -871,6 +1083,12 @@ namespace GridBlazor
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+
+                if (ShowErrorsOnGrid)
+                    Error = e.Message;
+
+                if (ThrowExceptions)
+                    throw;
             }
         }
 
@@ -954,6 +1172,12 @@ namespace GridBlazor
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+
+                if (ShowErrorsOnGrid)
+                    Error = e.Message;
+
+                if (ThrowExceptions)
+                    throw;
             }
         }
     }

@@ -1,8 +1,8 @@
 using GridBlazorOData.Server.Models;
-using Microsoft.AspNet.OData.Extensions;
+using GridShared.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,8 +18,6 @@ namespace GridBlazorOData.Server
 
         public IConfiguration Configuration { get; }
 
-        public static string ConnectionString = "Server=.\\SQLEXPRESS;Database=NorthWind;Trusted_Connection=True;MultipleActiveResultSets=true";
-
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
@@ -28,7 +26,7 @@ namespace GridBlazorOData.Server
 
             services.AddDbContext<NorthwindDbContext>(options =>
             {
-                options.UseSqlServer(ConnectionString);
+                options.UseGridBlazorDatabase();
                 //options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.QueryClientEvaluationWarning));
             });
 
@@ -44,7 +42,8 @@ namespace GridBlazorOData.Server
             });
 
             services.AddControllers();
-            services.AddOData();
+            services.AddOData(opt => opt.AddModel("odata", EdmModel.GetEdmModel())
+                .Select().Expand().Filter().OrderBy().SetMaxTop(null).Count());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -72,9 +71,6 @@ namespace GridBlazorOData.Server
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.Select().Expand().Filter().OrderBy().MaxTop(100).Count();
-                endpoints.MapODataRoute("odata", "odata", EdmModel.GetEdmModel());
-
                 endpoints.MapControllers();
                 endpoints.MapFallbackToFile("index.html");
             });
