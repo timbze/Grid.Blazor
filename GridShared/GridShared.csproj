@@ -12,6 +12,7 @@
     <!--<PackageProjectUrl>https://github.com/gustavnavar/Grid.Blazor</PackageProjectUrl>-->
     <PackageLicenseExpression>LGPL-2.1-only</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/timbze/Grid.Blazor</RepositoryUrl>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
