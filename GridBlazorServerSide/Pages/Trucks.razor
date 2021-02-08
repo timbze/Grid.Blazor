@@ -1,4 +1,5 @@
 ﻿@page "/trucks"
+@using GridBlazorServerSide.Models
 @using GridBlazorServerSide.Resources
 @using GridBlazorServerSide.Services
 @using Microsoft.Extensions.Primitives
@@ -31,13 +32,9 @@ else
 
         Action<IGridColumnCollection<Truck>> columns = c =>
         {
-            c.Add(t => t.description)
-                .Titled("Description")
-                .Filterable(true);
-
-            c.Add(t => t.owner_person.full_name)
-                .Titled("Owner")
-                .Filterable(true);
+            c.Add(t => t.Description).Titled("Description");
+            c.Add(t => t.Person.FullName).Titled("Person");
+            c.Add(t => t.Type).Titled("Type").RenderValueAs(r => r.Type?.ToText()).SetListFilter(truckService.GetTypes(), true, true);
         };
 
         var query = new QueryDictionary<StringValues>();

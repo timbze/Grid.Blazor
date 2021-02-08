@@ -41,6 +41,7 @@ namespace GridShared.Columns
 
         IGrid ParentGrid { get; }
         bool Hidden { get; set; }
+        bool? ExcelHidden { get; set; }
         CrudHidden CrudHidden { get; }
         bool ReadOnlyOnUpdate { get; }
         bool IsPrimaryKey { get; }
@@ -50,6 +51,9 @@ namespace GridShared.Columns
         bool SingleCheckbox { get; }
         string TooltipValue { get; }
         bool MultipleInput { get; }
+        bool ToggleSwitch { get; }
+        string TrueLabel { get; }
+        string FalseLabel { get; }
     }
 
     /// <summary>
@@ -331,6 +335,12 @@ namespace GridShared.Columns
         IGridColumn<T> SetCrudHidden(bool all);
 
         /// <summary>
+        ///     Sets the column as hidden for excel export, 
+        ///     overriding the default Hidden value (if not null)
+        /// </summary>
+        IGridColumn<T> SetExcelHidden(bool? all);
+
+        /// <summary>
         ///     Sets the column as readonly on update.
         /// </summary>
         IGridColumn<T> SetReadOnlyOnUpdate(bool enabled);
@@ -384,6 +394,11 @@ namespace GridShared.Columns
         ///    Allow grid header to show a tooltip
         /// </summary>
         IGridColumn<T> SetTooltip(string value);
+
+        /// <summary>
+        ///    Allow grid header to show a tooltip
+        /// </summary>
+        IGridColumn<T> SetToggleSwitch(bool enabled, string trueLabel = null, string falseLabel = null);
     }
 
     public interface IColumn
@@ -503,6 +518,11 @@ namespace GridShared.Columns
         ///     Sort direction of current column
         /// </summary>
         GridSortDirection? Direction { get; set; }
+
+        /// <summary>
+        ///     Initial sort direction of current column
+        /// </summary>
+        GridSortDirection? InitialDirection { get; set; }
     }
 
     public interface IFilterableColumn<T>
@@ -542,7 +562,7 @@ namespace GridShared.Columns
         ///     Specify a list filter widget type for this column
         /// </summary>
         /// <param name="selectItems">List of selectable items</param>
-        IGridColumn<T> SetListFilter(IEnumerable<SelectItem> selectItems);
+        IGridColumn<T> SetListFilter(IEnumerable<SelectItem> selectItems, bool includeIsNull = false, bool includeIsNotNull = false);
     }
 
     public interface IFilterableColumn : IColumn

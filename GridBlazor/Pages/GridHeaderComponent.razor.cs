@@ -94,8 +94,12 @@ namespace GridBlazor.Pages
             if (GridComponent.Grid.Direction == GridDirection.RTL)
                 _cssStyles = string.Concat(_cssStyles, " text-align:right;direction:rtl;").Trim();
 
-            if (!string.IsNullOrWhiteSpace(Column.Width))
-                _cssStyles = string.Concat(_cssStyles, " width:", Column.Width, ";").Trim();
+            // tables with fixed layout don't need to set up column width on the header
+            if (GridComponent.Grid.TableLayout == TableLayout.Auto)
+            {
+                if (!string.IsNullOrWhiteSpace(Column.Width))
+                    _cssStyles = string.Concat(_cssStyles, " width:", Column.Width, ";").Trim();
+            }
 
             List<string> cssFilterClasses = new List<string>();
             cssFilterClasses.Add(FilterButtonCss);
@@ -116,8 +120,16 @@ namespace GridBlazor.Pages
             if (Column.FilterEnabled)
                 FilterWidgetRender = CreateFilterWidgetComponent();
 
-            if(!string.IsNullOrWhiteSpace(Column.Name))
+            if (!string.IsNullOrWhiteSpace(Column.Name))
+            {
+                if (GridComponent.HeaderComponents.ContainsKey(Column.Name))
+                {
+                    var headerComponent = GridComponent.HeaderComponents.Get(Column.Name);
+                    _allChecked = headerComponent._allChecked;
+                    _showAllChecked = headerComponent._showAllChecked;
+                }
                 GridComponent.HeaderComponents.AddParameter(Column.Name, this);
+            }
         }
 
         private RenderFragment CreateFilterWidgetComponent() => builder =>
@@ -168,13 +180,31 @@ namespace GridBlazor.Pages
 
         protected async Task TitleButtonClicked()
         {
-            //switch direction for link:
-            GridSortDirection newDir = Column.Direction == GridSortDirection.Ascending
-                                           ? GridSortDirection.Descending
-                                           : GridSortDirection.Ascending;
-
-            await GridComponent.GetSortUrl(SortingSettings.ColumnQueryParameterName, Column.Name, 
-                SortingSettings.DirectionQueryParameterName, ((int)newDir).ToString(CultureInfo.InvariantCulture));
+            if (Column.IsSorted)
+            {
+                if (Column.Direction == GridSortDirection.Ascending)
+                {
+                    await GridComponent.GetSortUrl(SortingSettings.ColumnQueryParameterName, Column.Name, SortingSettings.DirectionQueryParameterName,
+                        ((int)GridSortDirection.Descending).ToString(CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    if (Column.InitialDirection.HasValue)
+                    {
+                        await GridComponent.GetSortUrl(SortingSettings.ColumnQueryParameterName, Column.Name, SortingSettings.DirectionQueryParameterName,
+                        ((int)GridSortDirection.Ascending).ToString(CultureInfo.InvariantCulture));
+                    }
+                    else
+                    {
+                        await GridComponent.GetSortUrl(SortingSettings.ColumnQueryParameterName, SortingSettings.DirectionQueryParameterName);
+                    }
+                }
+            }
+            else
+            {
+                await GridComponent.GetSortUrl(SortingSettings.ColumnQueryParameterName, Column.Name, SortingSettings.DirectionQueryParameterName, 
+                    ((int)GridSortDirection.Ascending).ToString(CultureInfo.InvariantCulture));
+            }
         }
 
         public async Task FilterIconClicked()
@@ -239,7 +269,7 @@ namespace GridBlazor.Pages
             }
         }
 
-        protected async Task HeaderCheckboxChanged()
+        protected async Task CheckboxChangeHandler()
         {        
             if (Column.HeaderCheckbox)
             {

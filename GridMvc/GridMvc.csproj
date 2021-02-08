@@ -8,7 +8,7 @@
     <EnableDefaultEmbeddedResourceItems>False</EnableDefaultEmbeddedResourceItems>
     <Product>GridMvc</Product>
     <PackageId>GridMvcCore</PackageId>
-    <Version>4.0.0-tim20201030</Version>
+    <Version>4.1.5-timmy</Version>
     <Title>GridMvc</Title>
     <Description>ASP.NET MVC Grid component</Description>
     <Summary>ASP.NET MVC Grid component</Summary>
@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
-    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="5.0.0-rc.2.20475.17" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="5.0" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
@@ -99,6 +99,9 @@
     <EmbeddedResource Include="Resources\Strings.pt-BR.resx" LogicalName="GridMvc.Resources.Strings.pt-BR.resources">
       <Generator></Generator>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.bg.resx" LogicalName="GridMvc.Resources.Strings.bg.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\css\gridmvc.css" LogicalName="GridMvc.Resources.css.gridmvc.css" />
     <EmbeddedResource Include="Resources\css\gridmvc.min.css" LogicalName="GridMvc.Resources.css.gridmvc.min.css" />
     <EmbeddedResource Include="Resources\css\gridmvc-bootstrap3.css" LogicalName="GridMvc.Resources.css.gridmvc-bootstrap3.css" />
@@ -123,6 +126,7 @@
     <EmbeddedResource Include="Resources\js\gridmvc-lang-eu.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-eu.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-lang-ca.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-ca.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-lang-pt.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-pt.js" />
+    <EmbeddedResource Include="Resources\js\gridmvc-lang-bg.js" LogicalName="GridMvc.Resources.js.gridmvc-lang-bg.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-ajax.js" LogicalName="GridMvc.Resources.js.gridmvc-ajax.js" />
     <EmbeddedResource Include="Resources\js\gridmvc-ajax.min.js" LogicalName="GridMvc.Resources.js.gridmvc-ajax.min.js" />
   </ItemGroup>

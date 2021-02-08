@@ -765,6 +765,11 @@ namespace GridBlazor
         IGridClient<T> SubGrid(Func<object[], Task<ICGrid>> subGrids, params (string,string)[] keys);
 
         /// <summary>
+        ///    Allow grid to show a SubGrid
+        /// </summary>
+        IGridClient<T> SubGrid(Func<object[], Task<ICGrid>> subGrids, bool allOpened, params (string, string)[] keys);
+
+        /// <summary>
         ///     Configure keyboard utilization
         /// </summary>
         IGridClient<T> SetKeyboard(bool enable);
@@ -808,6 +813,11 @@ namespace GridBlazor
         ///    Setup the direction of grid
         /// </summary>
         IGridClient<T> SetDirection(GridDirection dir);
+
+        /// <summary>
+        ///    Setup the table layout and dimensions
+        /// </summary>
+        IGridClient<T> SetTableLayout(TableLayout tableLayout, string width = null, string height = null);
 
         /// <summary>
         ///    Handle UpdateGrid errors from the server

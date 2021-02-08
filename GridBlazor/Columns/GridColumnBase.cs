@@ -1,4 +1,5 @@
 using GridBlazor.Pages;
+using GridBlazor.Resources;
 using GridShared;
 using GridShared.Columns;
 using GridShared.Filtering;
@@ -43,7 +44,7 @@ namespace GridBlazor.Columns
         public bool EncodeEnabled { get; protected set; }
         public bool SanitizeEnabled { get; set; }
 
-        public string Width { get; set; }
+        public abstract string Width { get; set; }
 
         public int CrudWidth { get; set; } = 5;
 
@@ -58,11 +59,14 @@ namespace GridBlazor.Columns
         public string FieldName { get; protected set; }
 
         public bool IsSorted { get; set; }
+        
         public GridSortDirection? Direction { get; set; }
 
         public GridSortDirection? InitialDirection { get; set; }
 
         public bool Hidden { get; set; }
+
+        public bool? ExcelHidden { get; set; }
 
         public CrudHidden CrudHidden { get; protected set; } = CrudHidden.NONE;
 
@@ -87,6 +91,12 @@ namespace GridBlazor.Columns
         public InputType InputType { get; protected set; }
 
         public bool MultipleInput { get; protected set; } = false;
+
+        public bool ToggleSwitch { get; protected set; } = false;
+
+        public string TrueLabel { get; protected set; } = Strings.BoolTrueLabel;
+
+        public string FalseLabel { get; protected set; } = Strings.BoolFalseLabel;
 
         public bool IsSumEnabled { get; set; } = false;
 
@@ -471,6 +481,12 @@ namespace GridBlazor.Columns
             return this;
         }
 
+        public IGridColumn<T> SetExcelHidden(bool? excelHidden)
+        {
+            ExcelHidden = excelHidden;
+            return this;
+        }
+
         public IGridColumn<T> SetCrudHidden(bool all)
         {
             return SetCrudHidden(all, all, all, all);
@@ -649,7 +665,8 @@ namespace GridBlazor.Columns
         public abstract IGridColumn<T> SetFilterWidgetType(string typeName);
         public abstract IGridColumn<T> SetFilterWidgetType(string typeName, object widgetData);
 
-        public abstract IGridColumn<T> SetListFilter(IEnumerable<SelectItem> selectItems);
+        public abstract IGridColumn<T> SetListFilter(IEnumerable<SelectItem> selectItems, bool includeIsNull = false, 
+            bool includeIsNotNull = false);
 
         public abstract IGridColumn<T> SetCellCssClassesContraint(Func<T, string> contraint);
         public abstract string GetCellCssClasses(object item);
@@ -698,6 +715,14 @@ namespace GridBlazor.Columns
             return this;
         }
 
+        public IGridColumn<T> SetToggleSwitch(bool enabled, string trueLabel = null, string falseLabel = null)
+        {
+            ToggleSwitch = enabled;
+            TrueLabel = trueLabel;
+            FalseLabel = falseLabel;
+            return this;
+        }
+
         #endregion
 
         #region IConstrainedGridColumn Members
@@ -707,6 +732,5 @@ namespace GridBlazor.Columns
         #endregion
 
         public IColumnTotals<T> Totals { get; }
-
     }
 }

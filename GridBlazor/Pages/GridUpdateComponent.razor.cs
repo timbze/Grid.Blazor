@@ -22,12 +22,14 @@ namespace GridBlazor.Pages
         private bool _shouldRender = false;
         private QueryDictionary<RenderFragment> _renderFragments;
         private IEnumerable<string> _tabGroups;
+        internal int _buttonsVisibility = 0;
         private QueryDictionary<bool> _buttonCrudComponentVisibility = new QueryDictionary<bool>();
         private string _code = StringExtensions.RandomString(8);
         private string _confirmationCode = "";
 
         public string Error { get; set; } = "";
         public QueryDictionary<string> ColumnErrors { get; set; } = new QueryDictionary<string>();
+        public GridUpdateButtonsComponent<T> GridUpdateButtonsComponent { get; private set; }
         public QueryDictionary<VariableReference> Children { get; private set; } = new QueryDictionary<VariableReference>();
 
         public QueryDictionary<VariableReference> InputFiles { get; private set; } = new QueryDictionary<VariableReference>();
@@ -229,16 +231,28 @@ namespace GridBlazor.Pages
         {
             var inputFile = InputFiles.Get(fieldName);
             var type = inputFile.Variable.GetType();
-            if (type == typeof(Agno.BlazorInputFile.InputFile) 
-                && ((Agno.BlazorInputFile.InputFile)inputFile.Variable).InputFileElement.Id != null)
+            if (type == typeof(AgnoInputFile) 
+                && ((AgnoInputFile)inputFile.Variable).InputFileElement.Id != null)
             {
-                await jSRuntime.InvokeVoidAsync("gridJsFunctions.click", (ElementReference)((Agno.BlazorInputFile.InputFile)inputFile.Variable).InputFileElement);
+                await jSRuntime.InvokeVoidAsync("gridJsFunctions.click", (ElementReference)((AgnoInputFile)inputFile.Variable).InputFileElement);
             }
         }
 
-        protected void BackButtonClicked()
+        public void ShowCrudButtons()
         {
-            GridComponent.BackButton();
+            _buttonsVisibility ++;
+            GridUpdateButtonsComponent.Render();
+        }
+
+        public void HideCrudButtons()
+        {
+            _buttonsVisibility --;
+            GridUpdateButtonsComponent.Render();
+        }
+
+        public async Task BackButtonClicked()
+        {
+            await GridComponent.Back();
         }
 
     }

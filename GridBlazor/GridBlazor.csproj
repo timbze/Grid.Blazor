@@ -6,7 +6,7 @@
     <LangVersion>8.0</LangVersion>
     <GenerateEmbeddedFilesManifest>True</GenerateEmbeddedFilesManifest>
     <EnableDefaultEmbeddedResourceItems>False</EnableDefaultEmbeddedResourceItems>
-    <Version>2.0.2-tim20201030</Version>
+    <Version>2.1.9-timmy</Version>
     <Title>GridBlazor</Title>
     <Description>Grid components for Blazor</Description>
     <Summary>Grid components for Blazor</Summary>
@@ -25,11 +25,11 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
-    <PackageReference Include="Microsoft.AspNetCore.Components" Version="5.0.0-rc.2.20475.17" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="5.0.0-rc.2.20475.17" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0-rc.2.20475.5" />
-    <PackageReference Include="Microsoft.Extensions.Primitives" Version="5.0.0-rc.2.20475.5" />
-    <PackageReference Include="System.Net.Http.Json" Version="5.0.0-rc.2.20475.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="5.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0" />
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="5.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="5.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-        <PackageReference Include="Agno.BlazorInputFile" Version="0.2.1" />
+    <PackageReference Include="Agno.BlazorInputFile" Version="0.3.0" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.11" />
   </ItemGroup>
   
@@ -111,6 +111,9 @@
       <Generator></Generator>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Strings.pt-BR.resx" LogicalName="GridBlazor.Resources.Strings.pt-BR.resources">
+      <Generator></Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Strings.bg.resx" LogicalName="GridBlazor.Resources.Strings.bg.resources">
       <Generator></Generator>
     </EmbeddedResource>
   </ItemGroup>

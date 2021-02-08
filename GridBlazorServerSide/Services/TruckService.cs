@@ -1,12 +1,12 @@
-﻿using GridMvc.Server;
+﻿using GridBlazorServerSide.Models;
+using GridMvc.Server;
 using GridShared;
 using GridShared.Utility;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using System.Linq;
 
 namespace GridBlazorServerSide.Services
 {
@@ -33,85 +33,87 @@ namespace GridBlazorServerSide.Services
         {
             var trucks = new List<Truck>();
             trucks.Add(new Truck {
-                truck_id = 1,
-                description = "Truck 1",
-                owner_person = new Person {
-                    person_id = 1,
-                    first_name = "Owner",
-                    last_name = "1"
-                }
+                Id = 1,
+                Description = "Truck 1",
+                Person = new Person {
+                    Id = 1,
+                    FirstName = "Person",
+                    LastName = "1"
+                },
+                Type = PersonType.DriverAndOwner
             });
             trucks.Add(new Truck
             {
-                truck_id = 2,
-                description = "Truck 2",
-                owner_person = new Person
+                Id = 2,
+                Description = "Truck 2",
+                Person = new Person
                 {
-                    person_id = 2,
-                    last_name = "2"
-                }
+                    Id = 2,
+                    LastName = "2"
+                },
+                Type = PersonType.Driver
             });
             trucks.Add(new Truck
             {
-                truck_id = 3,
-                description = "Truck 3",
-                owner_person = new Person
+                Id = 3,
+                Description = "Truck 3",
+                Person = new Person
                 {
-                    person_id = 1,
-                    first_name = "Owner"
-                }
+                    Id = 1,
+                    FirstName = "Person"
+                },
+                Type = PersonType.Owner
             });
             trucks.Add(new Truck
             {
-                truck_id = 4,
-                description = "Truck 4",
-                owner_person = new Person
+                Id = 4,
+                Description = "Truck 4",
+                Person = new Person
                 {
-                    first_name = "Owner",
-                    last_name = "4"
-                }
+                    Id = 4,
+                    FirstName = "Person",
+                    LastName = "4"
+                },
+                Type = PersonType.Driver
             });
             trucks.Add(new Truck
             {
-                truck_id = 5,
-                description = "Truck 5"
-            });
-            trucks.Add(new Truck
-            {
-                description = "Truck 6",
-                owner_person = new Person
+                Id = 5,
+                Description = "Truck 5",
+                Person = new Person
                 {
-                    person_id = 6,
-                    first_name = "Owner",
-                    last_name = "6"
-                }
+                    Id = 5,
+                    FirstName = "Person",
+                    LastName = "5"
+                },
+                Type = PersonType.Driver
+            });
+            trucks.Add(new Truck
+            {
+                Id = 6,
+                Description = "Truck 6",
+                Person = new Person
+                {
+                    Id = 6,
+                    FirstName = "Person",
+                    LastName = "6"
+                },
+                Type = PersonType.Owner
             });
             return trucks;
         }
-    }
 
-    [Serializable]
-    public class Truck
-    {
-        [Key]
-        public int? truck_id { get; set; }
-        public string description { get; set; }
-        public Person owner_person { get; set; }
-    }
-
-    [Serializable]
-    public class Person
-    {
-        [Key]
-        public int? person_id { get; set; }
-        public string first_name { get; set; }
-        public string last_name { get; set; }
-        public string full_name => $"{ first_name } { last_name }";
+        public IEnumerable<SelectItem> GetTypes()
+        {
+            return new PersonType[] { PersonType.Driver, PersonType.Owner, PersonType.DriverAndOwner }
+                .Select(r => new SelectItem(r.ToString(), r.ToText()));
+        }
     }
 
     public interface ITruckService
     {
         ItemsDTO<Truck> GetTrucksGridRows(Action<IGridColumnCollection<Truck>> columns,
             QueryDictionary<StringValues> query);
+        IEnumerable<SelectItem> GetTypes();
     }
 }

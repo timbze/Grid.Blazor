@@ -150,6 +150,8 @@ namespace GridBlazor
                 IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)>();
         }
 
+        public GridComponent<T> GridComponent { get; set; }
+
         /// <summary>
         /// Total count of items in the grid
         /// </summary>
@@ -391,6 +393,21 @@ namespace GridBlazor
         public GridDirection Direction { get; set; } = GridDirection.LTR;
 
         /// <summary>
+        ///     Get value for table layout
+        /// </summary>
+        public TableLayout TableLayout { get; internal set; } = TableLayout.Auto;
+
+        /// <summary>
+        ///     Get value for table width
+        /// </summary>
+        public string Width { get; internal set; } = "auto";
+
+        /// <summary>
+        ///     Get value for table height
+        /// </summary>
+        public string Height { get; internal set; } = "auto";
+
+        /// <summary>
         ///     Get and set export to an Excel file
         /// </summary>
         public bool ExcelExport { get; internal set; }
@@ -531,6 +548,11 @@ namespace GridBlazor
         /// </summary>
         public Func<object[], Task<ICGrid>> SubGrids { get; set;  }
 
+        /// <summary>
+        ///     Subgrids state
+        /// </summary>
+        public bool SubGridsOpened { get; set; } = false;
+
         public Type Type { get { return typeof(T); } }
 
         /// <summary>
@@ -559,6 +581,22 @@ namespace GridBlazor
                 {
                     var value = item.GetType().GetProperty(column.FieldName).GetValue(item);
                     values.Add(value);
+                }
+            }
+            return values.ToArray();
+        }
+
+        /// <summary>
+        ///     Get primary keys for CRUD
+        /// </summary>
+        public string[] GetPrimaryKeys()
+        {
+            List<string> values = new List<string>();
+            foreach (var column in Columns)
+            {
+                if (column.IsPrimaryKey)
+                {
+                    values.Add(column.FieldName);
                 }
             }
             return values.ToArray();
@@ -1094,6 +1132,7 @@ namespace GridBlazor
 
         private async Task GetOData()
         {
+            var jsonOptions = new JsonSerializerOptions().AddOdataSupport();
             try
             {
                 // Preprocessor (filter and sorting)
@@ -1120,7 +1159,8 @@ namespace GridBlazor
                     allParameters = "&" + allParameters;
                 else
                     allParameters = "?" + allParameters;
-                ODataDTO<T> response = await HttpClient.GetFromJsonAsync<ODataDTO<T>>(Url + allParameters);
+                ODataDTO<T> response = await HttpClient.GetFromJsonAsync<ODataDTO<T>>(
+                    Url + allParameters, jsonOptions);
                 if (response == null)
                 {
                     Console.WriteLine("Response is null");
@@ -1159,7 +1199,8 @@ namespace GridBlazor
                     allParameters = "?" + allParameters;
 
                 //  get processed items
-                response = await HttpClient.GetFromJsonAsync<ODataDTO<T>>(Url + allParameters);
+                response = await HttpClient.GetFromJsonAsync<ODataDTO<T>>(
+                    Url + allParameters, jsonOptions);
                 if (response == null ||  response.Value == null)
                 {
                     Console.WriteLine("Response is null");

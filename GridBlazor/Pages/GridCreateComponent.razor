@@ -41,7 +41,7 @@
                     {
                         <label for="@column.FieldName" class="col-form-label col-md-@column.CrudLabelWidth.ToString()">@column.Title</label>
                     }
-                    <div class="@(type == typeof(bool) ? "col-md-1" : "col-md-" + column.CrudWidth.ToString())">
+                    <div class="@(type == typeof(bool) && !column.ToggleSwitch ? "col-md-1" : "col-md-" + column.CrudWidth.ToString())">
                         @if (((IGridColumn<T>)column).IsSelectField.IsSelectKey)
                         {
                             var selectedValue = column.GetFormatedValue(value);
@@ -93,15 +93,15 @@
                                 <div class="input-group">
                                     <input type="text" id="@column.FieldName" name="@column.FieldName" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" value="@column.GetFormatedValue(value)">
                                     <span class="input-group-btn">
-                                        <button type="button" class="btn btn-default btn-outline-secondary grid-button-input-file" @onclick="() => ButtonFileClicked(column.FieldName)">@Strings.Files</button>
+                                        <button type="button" class="btn btn-default btn-primary grid-button-input-file" @onclick="() => ButtonFileClicked(column.FieldName)">@Strings.Files</button>
                                     </span>
                                     @if (column.MultipleInput)
                                     {
-                                        <Agno.BlazorInputFile.InputFile name="@(column.FieldName + "-file")" multiple style="display:none;" @ref="reference.Variable" OnFileChange="(files) => OnFileChange(column, files)" />
+                                        <AgnoInputFile name="@(column.FieldName + "-file")" multiple style="display:none;" @ref="reference.Variable" OnFileChange="(files) => OnFileChange(column, files)" />
                                     }
                                     else
                                     {
-                                        <Agno.BlazorInputFile.InputFile name="@(column.FieldName + "-file")" style="display:none;" @ref="reference.Variable" OnFileChange="(files) => OnFileChange(column, files)" />
+                                        <AgnoInputFile name="@(column.FieldName + "-file")" style="display:none;" @ref="reference.Variable" OnFileChange="(files) => OnFileChange(column, files)" />
                                     }
                                 </div>
                             }
@@ -110,7 +110,7 @@
                                 string typeAttr = ((IGridColumn<T>)column).InputType == InputType.None ? "date" : ((IGridColumn<T>)column).InputType.ToTypeAttr();
                                 if (typeAttr == "week")
                                 {
-                                    if (GridComponent._isWeekSupported)
+                                    if (GridComponent.IsWeekSupported)
                                     {
                                         <input id="@column.FieldName" name="@column.FieldName" type="@typeAttr" placeholder="yyyy-Www" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" value="@(((ICGridColumn)column).GetFormatedDateTime(value, typeAttr))" @onchange="(e) => ChangeValue(e, column, typeAttr)" />
                                     }
@@ -121,7 +121,7 @@
                                 }
                                 else if (typeAttr == "month")
                                 {
-                                    if (GridComponent._isMonthSupported)
+                                    if (GridComponent.IsMonthSupported)
                                     {
                                         <input id="@column.FieldName" name="@column.FieldName" type="@typeAttr" placeholder="yyyy-mm" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" value="@(((ICGridColumn)column).GetFormatedDateTime(value, typeAttr))" @onchange="(e) => ChangeValue(e, column, typeAttr)" />
                                     }
@@ -132,7 +132,7 @@
                                 }
                                 else if (typeAttr == "datetime-local")
                                 {
-                                    if (GridComponent._isDateTimeLocalSupported)
+                                    if (GridComponent.IsDateTimeLocalSupported)
                                     {
                                         <input id="@column.FieldName" name="@column.FieldName" type="@typeAttr" placeholder="yyyy-mm-dd hh:mm" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" value="@(((ICGridColumn)column).GetFormatedDateTime(value, typeAttr))" @onchange="(e) => ChangeValue(e, column, typeAttr)" />
                                     }
@@ -155,11 +155,35 @@
                             {
                                 if (value != null && (bool)value == true)
                                 {
-                                    <input id="@column.FieldName" name="@column.FieldName" type="checkbox" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" checked="checked" value="true" @onchange="(e) => ChangeValue(e, column)" />
+                                    if (column.ToggleSwitch)
+                                    {
+                                        <label class="col-form-label">@column.FalseLabel</label>
+                                        <label class="grid-switch">
+                                            <input id="@column.FieldName" name="@column.FieldName" type="checkbox" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" checked="checked" value="true" @onchange="(e) => ChangeValue(e, column)" />
+                                            <span class="grid-slider round"></span>
+                                        </label>
+                                        <label class="col-form-label">@column.TrueLabel</label>
+                                    }
+                                    else
+                                    {
+                                        <input id="@column.FieldName" name="@column.FieldName" type="checkbox" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" checked="checked" value="true" @onchange="(e) => ChangeValue(e, column)" />
+                                    }
                                 }
                                 else
                                 {
-                                    <input id="@column.FieldName" name="@column.FieldName" type="checkbox" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" value="false" @onchange="(e) => ChangeValue(e, column)" />
+                                    if (column.ToggleSwitch)
+                                    {
+                                        <label class="col-form-label">@column.FalseLabel</label>
+                                        <label class="grid-switch">
+                                            <input id="@column.FieldName" name="@column.FieldName" type="checkbox" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" value="false" @onchange="(e) => ChangeValue(e, column)" />
+                                            <span class="grid-slider round"></span>
+                                        </label>
+                                        <label class="col-form-label">@column.TrueLabel</label>
+                                    }
+                                    else
+                                    {
+                                        <input id="@column.FieldName" name="@column.FieldName" type="checkbox" class="form-control @(ColumnErrors.ContainsKey(@column.FieldName) ? "input-validation-error" : "")" value="false" @onchange="(e) => ChangeValue(e, column)" />
+                                    }
                                 }
                             }
                             else

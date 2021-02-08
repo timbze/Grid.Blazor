@@ -1,0 +1,60 @@
+﻿@page "/trucks"
+@using GridBlazorOData.Client.Resources
+@using GridBlazorOData.Shared.Models
+@using Microsoft.Extensions.Primitives
+@using System.Globalization
+@using System.Threading.Tasks
+@inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+
+@if (_task.IsCompleted)
+{
+    <div class="row">
+        <div class="col-md-12">
+            <GridComponent T="Truck" Grid="@_grid"></GridComponent>
+        </div>
+    </div>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code
+{
+    private CGrid<Truck> _grid;
+    private Task _task;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var locale = CultureInfo.CurrentCulture;
+        SharedResource.Culture = locale;
+
+        var trucks = new PersonType[] { PersonType.Driver, PersonType.Owner, PersonType.DriverAndOwner }
+                .Select(r => new SelectItem(r.ToString(), r.ToText()));
+
+        Action<IGridColumnCollection<Truck>> columns = c =>
+        {
+            c.Add(t => t.Description).Titled("Description");
+            c.Add(t => t.Person.FullName).Titled("Person");
+            c.Add(t => t.Type).Titled("Type").RenderValueAs(r => r.Type?.ToText()).SetListFilter(trucks, true, true);
+        };
+
+        var query = new QueryDictionary<StringValues>();
+        string url = NavigationManager.BaseUri + "odata/Trucks";
+
+        var client = new GridODataClient<Truck>(HttpClient, url, query, false, "trucksGrid", columns, 10, locale)
+            .Sortable()
+            .Filterable()
+            .ClearFiltersButton(true)
+            .SetStriped(true)
+            .WithMultipleFilters()
+            .WithGridItemsCount()
+            .Searchable(true, false, false);
+
+        _grid = client.Grid;
+        // Set new items to grid
+        _task = client.UpdateGrid();
+        await _task;
+    }
+}

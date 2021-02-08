@@ -56,6 +56,8 @@ namespace GridMvc.Columns
 
         private string _filterWidgetTypeName;
 
+        private string _width;
+
         public GridColumn(Expression<Func<T, TDataType>> expression, ISGrid grid) : this(expression, null, grid)
         { }
 
@@ -133,6 +135,21 @@ namespace GridMvc.Columns
             get { return _grid; }
         }
 
+        public override string Width
+        {
+            get 
+            {
+                if (string.IsNullOrWhiteSpace(_width) && ParentGrid.TableLayout == TableLayout.Fixed)
+                    return "12em";
+                else
+                    return _width; 
+            }
+            set 
+            { 
+                _width = value; 
+            }
+        }
+
         public override bool HasConstraint => _constraint != null;
 
         public override IGridColumn<T> SetFilterWidgetType(string typeName, object widgetData)
@@ -150,13 +167,16 @@ namespace GridMvc.Columns
             return this;
         }
 
-        public override IGridColumn<T> SetListFilter(IEnumerable<SelectItem> selectItems)
+        public override IGridColumn<T> SetListFilter(IEnumerable<SelectItem> selectItems, bool includeIsNull = false, 
+            bool includeIsNotNull = false)
         {
             return SetFilterWidgetType(SelectItem.ListFilter, selectItems);
         }
 
         public override IGridColumn<T> SortInitialDirection(GridSortDirection direction)
         {
+            InitialDirection = direction;
+
             if (string.IsNullOrEmpty(_grid.Settings.SortSettings.ColumnName))
             {
                 IsSorted = true;

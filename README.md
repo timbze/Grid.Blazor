@@ -1,10 +1,16 @@
 # Grid.Blazor
 
-A fork from: https://gridmvc.codeplex.com/
+GridBlazor is a Blazor component that shows data in a grid. It requires a back-end component that performs paging, sorting, filtering and others. 
+
+This back-end component can be one of the following ones:
+- GridMvcCore, that it is a fork from https://gridmvc.codeplex.com/ supporting ASP.Net Core 3.1 and ASP.Net 5.0
+- an OData back-end. All samples are based on Microsoft.AspNetCore.OData library, but it can be any other OData provider.
 
 It supports .NET Core 3.1 and 5.0, and Blazor WebAssembly 3.2.0 and 5.0
 
 ## Notes
+
+- Sorting is implemented on GridBlazor 2.1.2, GridMvcCore 4.1.2 and newer versions following this sequence "no sort" -> "sort ascending" -> "sort descending" -> "no sort" and so on when a column title is clicked 
 
 - GridMvcCore 3.0.0 does not support .Net Core 2.x. It requires .NET Core 3.1
 
@@ -69,7 +75,9 @@ It supports .NET Core 3.1 and 5.0, and Blazor WebAssembly 3.2.0 and 5.0
     ```
 
 ## Demo 
-http://gridblazor.azurewebsites.net
+- Blazor server-side: http://gridblazor.azurewebsites.net
+- Blazor WASM: http://gridblazorwasm.azurewebsites.net
+- Blazor WASM with OData back-end: http://gridblazorodata.azurewebsites.net
 
 ## Change Log
 https://github.com/gustavnavar/Grid.Blazor/releases

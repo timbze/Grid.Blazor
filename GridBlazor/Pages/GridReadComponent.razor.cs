@@ -16,7 +16,10 @@ namespace GridBlazor.Pages
         private bool _shouldRender = false;
         private QueryDictionary<RenderFragment> _renderFragments;
         private IEnumerable<string> _tabGroups;
+        internal int _buttonsVisibility = 0;
         private QueryDictionary<bool> _buttonCrudComponentVisibility = new QueryDictionary<bool>();
+
+        public GridReadButtonsComponent<T> GridReadButtonsComponent { get; private set; }
 
         public QueryDictionary<VariableReference> Children { get; private set; } = new QueryDictionary<VariableReference>();
 
@@ -96,6 +99,7 @@ namespace GridBlazor.Pages
             Type gridComponentType = typeof(GridComponent<>).MakeGenericType(grid.Type);
             builder.OpenComponent(++_sequence, gridComponentType);
             builder.AddAttribute(++_sequence, "Grid", grid);
+            builder.AddComponentReferenceCapture(++_sequence, r => reference.Variable = r);
             builder.CloseComponent();
         };
 
@@ -109,9 +113,21 @@ namespace GridBlazor.Pages
             _shouldRender = false;
         }
 
-        protected void BackButtonClicked()
+        public void ShowCrudButtons()
         {
-            GridComponent.BackButton();
+            _buttonsVisibility ++;
+            GridReadButtonsComponent.Render();
+        }
+
+        public void HideCrudButtons()
+        {
+            _buttonsVisibility --;
+            GridReadButtonsComponent.Render();
+        }
+
+        public async Task BackButtonClicked()
+        {
+            await GridComponent.Back();
         }
     }
 }

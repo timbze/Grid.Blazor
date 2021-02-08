@@ -38,6 +38,11 @@ namespace GridBlazor
         /// </summary>
         Func<object[], Task<ICGrid>> SubGrids { get; }
 
+        /// <summary>
+        ///     Subgrids state
+        /// </summary>
+        bool SubGridsOpened { get; }
+
         Type Type { get; }
 
         string Url { get; }
@@ -53,6 +58,11 @@ namespace GridBlazor
         ///     Get primary key values for CRUD
         /// </summary>
         object[] GetPrimaryKeyValues(object item);
+
+        /// <summary>
+        ///     Get primary keys for CRUD
+        /// </summary>
+        string[] GetPrimaryKeys();
 
         IGridSettingsProvider Settings { get; }
 

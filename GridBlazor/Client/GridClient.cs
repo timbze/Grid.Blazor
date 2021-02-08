@@ -1154,6 +1154,17 @@ namespace GridBlazor
         }
 
         /// <summary>
+        ///    Allow grid to show a SubGrid
+        /// </summary>
+        public IGridClient<T> SubGrid(Func<object[], Task<ICGrid>> subGrids, bool allOpened, params (string, string)[] keys)
+        {
+            _source.SubGrids = subGrids;
+            _source.SubGridsOpened = allOpened;
+            _source.SubGridKeys = keys;
+            return this;
+        }
+
+        /// <summary>
         ///     Configure keyboard utilization
         /// </summary>
         public IGridClient<T> SetKeyboard(bool enable)
@@ -1225,6 +1236,16 @@ namespace GridBlazor
         public IGridClient<T> SetDirection(GridDirection dir)
         {
             _source.Direction = dir;
+            return this;
+        }
+
+        public IGridClient<T> SetTableLayout(TableLayout tableLayout, string width = null, string height = null)
+        {
+            _source.TableLayout = tableLayout;
+            if (!string.IsNullOrWhiteSpace(width))
+                _source.Width = width;
+            if (!string.IsNullOrWhiteSpace(height))
+                _source.Height = height;
             return this;
         }
 
