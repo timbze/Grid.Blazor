@@ -241,16 +241,16 @@ else
         await Task.CompletedTask;
     }
 
-    private async Task<bool> BeforeRefreshGrid()
+    private async Task<bool> BeforeRefreshGrid(GridRefreshEventArgs e)
     {
-        Console.WriteLine("Grid will start refreshing");
+        Console.WriteLine($"Grid will start refreshing. ReloadData = {e.ReloadData}");
         await Task.CompletedTask;
         return true;
     }
 
-    private async Task AfterRefreshGrid()
+    private async Task AfterRefreshGrid(GridRefreshEventArgs e)
     {
-        Console.WriteLine("Grid has been refreshed");
+        Console.WriteLine($"Grid has been refreshed. ReloadData = {e.ReloadData}");
         await Task.CompletedTask;
     }
 }
