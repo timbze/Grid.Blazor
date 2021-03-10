@@ -26,7 +26,6 @@ namespace GridBlazor.Pages
         private int _sequence = 0;
         private bool _fromCrud = false;
         private bool _shouldRender = false;
-        private bool _spinner = false;
         internal bool HasSubGrid = false;
         internal bool HasTotals = false;
         internal bool RequiredTotalsColumn = false;
@@ -50,6 +49,9 @@ namespace GridBlazor.Pages
         internal ElementReference Gridmvc;
         internal ElementReference GridTable;
         internal ElementReference GridTableWrap;
+
+        internal ElementReference Spinner;
+        internal ElementReference Content;
 
         public event Func<object, SortEventArgs, Task> SortChanged;
         public event Func<object, ExtSortEventArgs, Task> ExtSortChanged;
@@ -372,10 +374,11 @@ namespace GridBlazor.Pages
         internal void RowClicked(int i, object item, MouseEventArgs args)
         {
             //If user clicked on a row withouth Control key, unselect all rows
-            if ((Grid.ModifierKey == ModifierKey.CtrlKey && !args.CtrlKey)
-                || (Grid.ModifierKey == ModifierKey.AltKey && !args.AltKey)
-                || (Grid.ModifierKey == ModifierKey.ShiftKey && !args.ShiftKey)
-                || (Grid.ModifierKey == ModifierKey.MetaKey && !args.MetaKey))
+            if ((!args.CtrlKey && !args.AltKey && !args.ShiftKey && !args.MetaKey)
+                || ( !((Grid.ModifierKey == ModifierKey.CtrlKey || Grid.SelectionKey == ModifierKey.CtrlKey) && args.CtrlKey)
+                    && !((Grid.ModifierKey == ModifierKey.AltKey || Grid.SelectionKey == ModifierKey.AltKey) && args.AltKey)
+                    && !((Grid.ModifierKey == ModifierKey.ShiftKey || Grid.SelectionKey == ModifierKey.ShiftKey) && args.ShiftKey)
+                    && !((Grid.ModifierKey == ModifierKey.MetaKey || Grid.SelectionKey == ModifierKey.MetaKey) && args.MetaKey)))
             {
                 SelectedRows.Clear();
                 Grid.SelectedItems = new List<object>();
@@ -384,18 +387,58 @@ namespace GridBlazor.Pages
             //If Grid is MultiSelectable, add selected row to list of rows
             if (Grid.ComponentOptions.MultiSelectable)
             {
-                SelectedRow = -1;
-                //If selected row is already part of collection, remove it
-                if (SelectedRows.Contains(i))
+                //Multiple row selection using the SHIFT key
+                if ((Grid.SelectionKey == ModifierKey.CtrlKey && args.CtrlKey)
+                    || (Grid.SelectionKey == ModifierKey.AltKey && args.AltKey)
+                    || (Grid.SelectionKey == ModifierKey.ShiftKey && args.ShiftKey)
+                    || (Grid.SelectionKey == ModifierKey.MetaKey && args.MetaKey))
                 {
-                    SelectedRows.Remove(i);
-                    Grid.SelectedItems = Grid.SelectedItems.Except(new[] { item });
+                    // second row selection
+                    if (SelectedRow != -1)
+                    {
+                        if (i > SelectedRow)
+                        {
+                            for (int j = SelectedRow; j <= i; j++)
+                            {
+                                SelectedRows.Add(j);
+                                Grid.SelectedItems = Grid.SelectedItems.Concat(new[] { Grid.ItemsToDisplay.ElementAt(j) });
+                            }
+                        }
+                        else
+                        {
+                            for (int j = i; j <= SelectedRow; j++)
+                            {
+                                SelectedRows.Add(j);
+                                Grid.SelectedItems = Grid.SelectedItems.Concat(new[] { Grid.ItemsToDisplay.ElementAt(j) });
+                            }
+                        }
+                        //reset first row selection
+                        SelectedRow = -1;
+                    }
+                    // first row selection
+                    else
+                    {
+                        SelectedRow = i;
+                        SelectedRows.Clear();
+                        Grid.SelectedItems = new List<object>();
+                    }
                 }
+                //Multiple row selection clicking one by one
                 else
                 {
-                    SelectedRows.Add(i);
-                    Grid.SelectedItems = Grid.SelectedItems.Concat(new[] { item });
-                }
+                    SelectedRow = -1;
+                    //If selected row is already part of collection, remove it
+                    if (SelectedRows.Contains(i))
+                    {
+                        SelectedRows.Remove(i);
+                        Grid.SelectedItems = Grid.SelectedItems.Except(new[] { item });
+                    }
+                    else
+                    {
+                        SelectedRows.Add(i);
+                        Grid.SelectedItems = Grid.SelectedItems.Concat(new[] { item });
+                    }
+                }                
             }
             else
             {
@@ -1219,7 +1262,7 @@ namespace GridBlazor.Pages
                 bool isValid = await OnBeforeInsert(component);
                 if (isValid)
                 {
-                    ShowSpinner();
+                    await ShowSpinner();
                     if (Grid.ServerAPI == ServerAPI.OData)
                         _item = await ((ICrudODataService<T>)((CGrid<T>)Grid).CrudDataService).Add(_item);
                     else
@@ -1227,10 +1270,11 @@ namespace GridBlazor.Pages
                     if(((CGrid<T>)Grid).CrudFileService != null)
                         await ((CGrid<T>)Grid).CrudFileService.InsertFiles(_item, component.Files);
                     await OnAfterInsert(component);
-                    HideSpinner();
+                    await HideSpinner();
                     CrudRender = null;
                     if (Grid.EditAfterInsert)
                     {
+                        await Grid.UpdateGrid();
                         await UpdateHandler(_item);
                     }
                     else
@@ -1243,6 +1287,7 @@ namespace GridBlazor.Pages
             }
             catch (Exception e)
             {
+                await HideSpinner();
                 Console.WriteLine(e.Message);
                 throw;
             }
@@ -1272,12 +1317,12 @@ namespace GridBlazor.Pages
                 bool isValid = await OnBeforeUpdate(component);
                 if (isValid)
                 {
-                    ShowSpinner();
+                    await ShowSpinner();
                     if (((CGrid<T>)Grid).CrudFileService != null)
                         _item = await((CGrid<T>)Grid).CrudFileService.UpdateFiles(_item, component.Files);
                     await ((CGrid<T>)Grid).CrudDataService.Update(_item);
                     await OnAfterUpdate(component);
-                    HideSpinner();
+                    await HideSpinner();
                     ((CGrid<T>)Grid).Mode = GridMode.Grid;
                     CrudRender = null;
                     _fromCrud = true;
@@ -1286,6 +1331,7 @@ namespace GridBlazor.Pages
             }
             catch (Exception e)
             {
+                await HideSpinner();
                 Console.WriteLine(e.Message);
                 throw;
             }
@@ -1315,13 +1361,13 @@ namespace GridBlazor.Pages
                 bool isValid = await OnBeforeDelete(component);
                 if (isValid)
                 {
-                    ShowSpinner();
+                    await ShowSpinner();
                     var keys = Grid.GetPrimaryKeyValues(_item);
                     if (((CGrid<T>)Grid).CrudFileService != null)
                         await ((CGrid<T>)Grid).CrudFileService.DeleteFiles(keys);
                     await ((CGrid<T>)Grid).CrudDataService.Delete(keys);
                     await OnAfterDelete(component);
-                    HideSpinner();
+                    await HideSpinner();
                     ((CGrid<T>)Grid).Mode = GridMode.Grid;
                     CrudRender = null;
                     _fromCrud = true;
@@ -1330,6 +1376,7 @@ namespace GridBlazor.Pages
             }
             catch (Exception e)
             {
+                await HideSpinner();
                 Console.WriteLine(e.Message);
                 throw;
             }
@@ -1402,18 +1449,16 @@ namespace GridBlazor.Pages
             await jSRuntime.InvokeVoidAsync("gridJsFunctions.focusElement", element);
         }
 
-        public void ShowSpinner()
+        public async Task ShowSpinner()
         {
-            _spinner = true;
-            _shouldRender = true;
-            StateHasChanged();
+            await jSRuntime.InvokeVoidAsync("gridJsFunctions.hideElement", Content);
+            await jSRuntime.InvokeVoidAsync("gridJsFunctions.showElement", Spinner);
         }
 
-        public void HideSpinner()
+        public async Task HideSpinner()
         {
-            _spinner = false;
-            _shouldRender = true;
-            StateHasChanged();
+            await jSRuntime.InvokeVoidAsync("gridJsFunctions.hideElement", Spinner);
+            await jSRuntime.InvokeVoidAsync("gridJsFunctions.showElement", Content);
         }
 
         public void ShowCrudButtons()
