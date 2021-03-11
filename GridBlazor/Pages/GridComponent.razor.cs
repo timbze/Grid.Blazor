@@ -282,7 +282,7 @@ namespace GridBlazor.Pages
             }
         }
 
-        private void InitCheckedKeys()
+        internal void InitCheckedKeys()
         {
             CheckboxesKeyed = new QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>>();
         }
@@ -1588,7 +1588,6 @@ namespace GridBlazor.Pages
                 SelectedRow = -1;
                 SelectedRows.Clear();
                 InitSubGridVars();
-                InitCheckedKeys();
                 await OnAfterUpdateGrid();
             }
 

@@ -54,6 +54,7 @@ namespace GridBlazor
         private readonly Func<QueryDictionary<StringValues>, ItemsDTO<T>> _dataService;
         private readonly Func<QueryDictionary<StringValues>, Task<ItemsDTO<T>>> _dataServiceAsync;
         private ICrudDataService<T> _crudDataService;
+        private GridComponent<T> _gridComponent;
 
         public CGrid(HttpClient httpClient, string url, IQueryDictionary<StringValues> query, bool renderOnlyRows,
             Action<IGridColumnCollection<T>> columns = null, CultureInfo cultureInfo = null,
@@ -150,7 +151,16 @@ namespace GridBlazor
                 IList<Action<object>> Actions, IList<Func<object, Task>> Functions, object Object)>();
         }
 
-        public GridComponent<T> GridComponent { get; set; }
+        public GridComponent<T> GridComponent
+        {
+            get => _gridComponent;
+            set
+            {
+                if (_gridComponent == null)
+                    value.InitCheckedKeys();
+                _gridComponent = value;
+            }
+        }
 
         /// <summary>
         /// Total count of items in the grid
