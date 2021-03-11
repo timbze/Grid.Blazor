@@ -106,12 +106,7 @@ namespace GridBlazor.Pages
 
         public List<int> SelectedRows { get; internal set; } = new List<int>();
 
-        [Obsolete("This property is obsolete. Use the new Checkboxes parameter.", true)]
-        public QueryDictionary<List<int>> CheckedRows { get; internal set; } = new QueryDictionary<List<int>>();
-
-        public QueryDictionary<Dictionary<int, CheckboxComponent<T>>> Checkboxes { get; private set; }
-
-        public QueryDictionary<QueryDictionary<bool>> ExceptCheckedRows { get; private set; } = new QueryDictionary<QueryDictionary<bool>>();
+        public QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>> CheckboxesKeyed { get; private set; } = new QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>>();
 
         public QueryDictionary<GridHeaderComponent<T>> HeaderComponents { get; private set; }
 
@@ -257,8 +252,7 @@ namespace GridBlazor.Pages
 
             HeaderComponents = new QueryDictionary<GridHeaderComponent<T>>();
 
-            InitCheckboxAndSubGridVars();
-            InitCheckedKeys();
+            InitSubGridVars();
 
             var queryBuilder = new CustomQueryStringBuilder(Grid.Settings.SearchSettings.Query);
             var exceptQueryParameters = new List<string> { GridPager.DefaultPageSizeQueryParameter };
@@ -268,9 +262,8 @@ namespace GridBlazor.Pages
             _shouldRender = true;
         }
 
-        private void InitCheckboxAndSubGridVars()
+        private void InitSubGridVars()
         {
-            Checkboxes = new QueryDictionary<Dictionary<int, CheckboxComponent<T>>>();
             if (HasSubGrid)
             {
                 IsSubGridVisible = new bool[Grid.Pager.PageSize];
@@ -291,13 +284,18 @@ namespace GridBlazor.Pages
 
         private void InitCheckedKeys()
         {
-            // checked keys must be initialized only on component creation or after a filter or search change
-            ExceptCheckedRows = new QueryDictionary<QueryDictionary<bool>>();
+            CheckboxesKeyed = new QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>>();
         }
 
         protected override bool ShouldRender()
         {
             return _shouldRender;
+        }
+
+        protected override Task OnInitializedAsync()
+        {
+            InitCheckedKeys();
+            return base.OnInitializedAsync();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -1580,16 +1578,17 @@ namespace GridBlazor.Pages
             }
         }
 
-        public async Task UpdateGrid(bool ReloadData = true)
+        public async Task UpdateGrid(bool reloadData = true)
         {
-            if (await OnBeforeRefreshGrid(ReloadData) == false) return;
+            if (await OnBeforeRefreshGrid(reloadData) == false) return;
 
-            if (ReloadData)
+            if (reloadData)
             {
                 await Grid.UpdateGrid();
                 SelectedRow = -1;
                 SelectedRows.Clear();
-                InitCheckboxAndSubGridVars();
+                InitSubGridVars();
+                InitCheckedKeys();
                 await OnAfterUpdateGrid();
             }
 
@@ -1598,7 +1597,7 @@ namespace GridBlazor.Pages
 
             await SetGridFocus();
 
-            await OnAfterRefreshGrid(ReloadData);
+            await OnAfterRefreshGrid(reloadData);
         }
 
         protected virtual async Task<bool> OnBeforeRefreshGrid(bool reloadData)

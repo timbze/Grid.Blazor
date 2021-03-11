@@ -1,11 +1,11 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using GridShared.Columns;
+﻿using GridShared.Columns;
 using GridShared.Events;
 using GridShared.Utility;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace GridBlazor.Pages
 {
@@ -20,6 +20,7 @@ namespace GridBlazor.Pages
         [CascadingParameter(Name = "GridComponent")]
         protected GridComponent<T> GridComponent { get; set; }
 
+        [Inject] private ILogger<CheckboxComponent<T>> Logger { get; set; }
         [Parameter]
         public T Item { get; set; }
 
@@ -31,6 +32,7 @@ namespace GridBlazor.Pages
 
         protected override void OnParametersSet()
         {
+            Logger.LogDebug("Parameters set");
             if (Object.GetType() == typeof((string, Func<T, bool>)))
             {
                 (_columnName, _expr) = ((string, Func<T, bool>))Object;
@@ -44,26 +46,20 @@ namespace GridBlazor.Pages
             }
 
             // add an empty dictionary if column is not in the dictionary
-            if (GridComponent.Checkboxes.Get(_columnName) == null)
-                GridComponent.Checkboxes.Add(_columnName, new Dictionary<int, CheckboxComponent<T>>());
-            var checkbox = GridComponent.Checkboxes.Get(_columnName);
-            checkbox.AddOrSet(RowId, this);
-
-            // add an empty dictionary if column is not in the dictionary
-            if (GridComponent.ExceptCheckedRows.Get(_columnName) == null)
-                GridComponent.ExceptCheckedRows.Add(_columnName, new QueryDictionary<bool>());
+            if (GridComponent.CheckboxesKeyed.Get(_columnName) == null)
+                GridComponent.CheckboxesKeyed.Add(_columnName, new QueryDictionary<(CheckboxComponent<T>, bool)>());
 
             // init value when header checkbox is enabled and is not null
             var header = GridComponent.HeaderComponents.Get(_columnName);
-            var exceptCheckedRows = GridComponent.ExceptCheckedRows.Get(_columnName);
+            var exceptCheckedRows = GridComponent.CheckboxesKeyed.Get(_columnName);
             var keys = GridComponent.Grid.GetPrimaryKeyValues(Item);
             string stringKeys = string.Join('_', keys);
 
             if (exceptCheckedRows != null && !string.IsNullOrWhiteSpace(stringKeys)
                 && exceptCheckedRows.ContainsKey(stringKeys))
-                _value = exceptCheckedRows.Get(stringKeys);
+                _value = exceptCheckedRows.Get(stringKeys).Item2;
             else if (header != null && header.IsChecked().HasValue)
-                _value = header.IsChecked().Value;
+                _value = header?.IsChecked() == true;
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -86,7 +82,7 @@ namespace GridBlazor.Pages
                 var header = GridComponent.HeaderComponents.Get(_columnName);
                 if (header != null && header.Column != null && header.Column.SingleCheckbox)
                 {
-                    var exceptCheckedRows = GridComponent.ExceptCheckedRows.Get(_columnName);
+                    var exceptCheckedRows = GridComponent.CheckboxesKeyed.Get(_columnName);
                     var keys = GridComponent.Grid.GetPrimaryKeyValues(Item);
                     string stringKeys = string.Join('_', keys);
                     if (exceptCheckedRows.ContainsKey(stringKeys))
@@ -124,15 +120,15 @@ namespace GridBlazor.Pages
             _value = value;
 
             var header = GridComponent.HeaderComponents.Get(_columnName);
-            var exceptCheckedRows = GridComponent.ExceptCheckedRows.Get(_columnName);
+            var checkBoxesKeyed = GridComponent.CheckboxesKeyed.Get(_columnName);
             var keys = GridComponent.Grid.GetPrimaryKeyValues(Item);
             string stringKeys = string.Join('_', keys);
 
             if (header != null && header.Column != null && header.Column.SingleCheckbox)
             {
-                var checkedRows = new QueryDictionary<bool>();
-                checkedRows.Add(stringKeys, value);
-                GridComponent.ExceptCheckedRows.AddOrSet(_columnName, checkedRows);
+                var checkedRows = new QueryDictionary<(CheckboxComponent<T>, bool)>();
+                checkedRows.Add(stringKeys, (this, value));
+                GridComponent.CheckboxesKeyed.AddOrSet(_columnName, checkedRows);
 
                 CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
                 {
@@ -143,19 +139,19 @@ namespace GridBlazor.Pages
             }
             else
             {
-                if (exceptCheckedRows != null && !string.IsNullOrWhiteSpace(stringKeys))
+                if (checkBoxesKeyed != null && !string.IsNullOrWhiteSpace(stringKeys))
                 {
-                    if (exceptCheckedRows.ContainsKey(stringKeys))
+                    if (checkBoxesKeyed.ContainsKey(stringKeys))
                     {
                         if (header != null && header.IsChecked().HasValue && header.IsChecked().Value == value)
-                            exceptCheckedRows.Remove(stringKeys);
+                            checkBoxesKeyed.Remove(stringKeys);
                         else
-                            exceptCheckedRows[stringKeys] = value;
+                            checkBoxesKeyed[stringKeys] = (this, value);
                     }
                     else
                     {
                         if (header == null || !header.IsChecked().HasValue || header.IsChecked().Value != value)
-                            exceptCheckedRows.Add(stringKeys, value);
+                            checkBoxesKeyed.Add(stringKeys, (this, value));
                     }
                 }
 

@@ -286,23 +286,23 @@ namespace GridBlazor.Pages
             {
                 if (Column.HeaderCheckbox)
                 {
-                    if (GridComponent.ExceptCheckedRows.Get(Column.Name).Values.Where(r => r == true).Count() 
+                    if (GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Where(r => r.Item2).Count() 
                         == GridComponent.Grid.ItemsCount
                         || (_allChecked == true &&
-                            GridComponent.ExceptCheckedRows.Get(Column.Name).Values.Where(r => r == false).Count() == 0))
+                            GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Where(r => !r.Item2).Count() == 0))
                     {
                         _allChecked = true;
                         _showAllChecked = true;
-                        GridComponent.ExceptCheckedRows.AddParameter(Column.Name, new QueryDictionary<bool>());
+                        GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
                     }
-                    else if (GridComponent.ExceptCheckedRows.Get(Column.Name).Values.Where(r => r == false).Count()
+                    else if (GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Where(r => !r.Item2).Count()
                         == GridComponent.Grid.ItemsCount
                         || (_allChecked == false &&
-                            GridComponent.ExceptCheckedRows.Get(Column.Name).Values.Where(r => r == true).Count() == 0))
+                            GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Where(r => r.Item2).Count() == 0))
                     {
                         _allChecked = false;
                         _showAllChecked = true;
-                        GridComponent.ExceptCheckedRows.AddParameter(Column.Name, new QueryDictionary<bool>());
+                        GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
                     }
                     else
                     {
@@ -331,7 +331,7 @@ namespace GridBlazor.Pages
                 // set a value and init ExceptCheckedRows for this column
                 _allChecked = value;
                 _showAllChecked = true;
-                GridComponent.ExceptCheckedRows.AddParameter(Column.Name, new QueryDictionary<bool>());
+                GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
 
                 CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
                 {
