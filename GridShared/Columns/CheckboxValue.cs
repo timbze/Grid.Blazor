@@ -3,6 +3,10 @@
     public enum CheckboxValue
     {
         Unchecked,
-        Checked
+        Checked,
+        /// <summary>
+        /// When some rows, are selected, but not all. Used for header checkbox
+        /// </summary>
+        Gray
     }
 }

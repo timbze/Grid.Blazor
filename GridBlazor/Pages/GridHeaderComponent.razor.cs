@@ -32,8 +32,7 @@ namespace GridBlazor.Pages
         private bool _isColumnFiltered;
         protected string _url;
         protected StringValues _clearInitFilter;
-        private bool? _allChecked = null;
-        private bool _showAllChecked = false;
+        private bool? _allChecked = false;
 
         protected string _cssStyles;
         protected string _cssClass;
@@ -126,7 +125,6 @@ namespace GridBlazor.Pages
                 {
                     var headerComponent = GridComponent.HeaderComponents.Get(Column.Name);
                     _allChecked = headerComponent._allChecked;
-                    _showAllChecked = headerComponent._showAllChecked;
                 }
                 GridComponent.HeaderComponents.AddParameter(Column.Name, this);
             }
@@ -273,8 +271,8 @@ namespace GridBlazor.Pages
         {        
             if (Column.HeaderCheckbox)
             {
-                if(_allChecked.HasValue)
-                    await SetChecked(!_allChecked.Value);
+                if(_allChecked != null)
+                    await SetChecked(_allChecked != true);
                 else
                     await SetChecked(true);
             }
@@ -282,43 +280,36 @@ namespace GridBlazor.Pages
 
         private async Task RowCheckboxChanged(CheckboxEventArgs<T> e)
         {
-            if (e.ColumnName == Column.Name)
+            if (e.ColumnName != Column.Name || !Column.HeaderCheckbox) return;
+            var oldValue = _allChecked;
+
+            var checkedCount = GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Count(r => r.Item2);
+            if (checkedCount > 0 && checkedCount != GridComponent.Grid.ItemsCount)
+                _allChecked = null;
+            else
             {
-                if (Column.HeaderCheckbox)
+                _allChecked = checkedCount == GridComponent.Grid.ItemsCount;
+                GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
+            }
+
+            if (_allChecked != oldValue)
+            {
+                CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
                 {
-                    if (GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Where(r => r.Item2).Count() 
-                        == GridComponent.Grid.ItemsCount
-                        || (_allChecked == true &&
-                            GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Where(r => !r.Item2).Count() == 0))
-                    {
-                        _allChecked = true;
-                        _showAllChecked = true;
-                        GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
-                    }
-                    else if (GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Where(r => !r.Item2).Count()
-                        == GridComponent.Grid.ItemsCount
-                        || (_allChecked == false &&
-                            GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Where(r => r.Item2).Count() == 0))
-                    {
-                        _allChecked = false;
-                        _showAllChecked = true;
-                        GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
-                    }
-                    else
-                    {
-                        _showAllChecked = false;
-                    }
-                }
-                else
-                {
-                    _allChecked = null;
-                    _showAllChecked = false;
-                }
-                StateHasChanged();
-                await Task.CompletedTask;
+                    ColumnName = Column.Name,
+                    Value = _allChecked == true ? CheckboxValue.Checked : CheckboxValue.Unchecked,
+                    HeaderValue = _allChecked == null ? CheckboxValue.Gray : (_allChecked == true ? CheckboxValue.Checked : CheckboxValue.Unchecked),
+                    RowId = e.RowId,
+                };
+                await GridComponent.OnHeaderCheckboxChanged(args);
+                await InvokeAsync(StateHasChanged);
             }
         }
 
+        /// <returns>
+        /// Null when some rows have been checked, but not all.
+        /// True when all rows have been checked, false if none.
+        /// </returns>
         public bool? IsChecked()
         {
             return _allChecked;
@@ -326,27 +317,23 @@ namespace GridBlazor.Pages
 
         public async Task SetChecked(bool value)
         {
-            if (Column.HeaderCheckbox)
-            {
-                // set a value and init ExceptCheckedRows for this column
-                _allChecked = value;
-                _showAllChecked = true;
-                GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
+            if (!Column.HeaderCheckbox) return;
+            var oldValue = _allChecked;
+            
+            _allChecked = value;
+            GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
 
-                CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
-                {
-                    ColumnName = Column.Name
-                };
-                if (value)
-                {
-                    args.Value = CheckboxValue.Checked;
-                }
-                else
-                {
-                    args.Value = CheckboxValue.Unchecked;
-                }
+            CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
+            {
+                ColumnName = Column.Name, 
+                Value = value ? CheckboxValue.Checked : CheckboxValue.Unchecked,
+                HeaderValue = value ? CheckboxValue.Checked : CheckboxValue.Unchecked,
+            };
+
+            if (_allChecked != oldValue)
+            {
                 await GridComponent.OnHeaderCheckboxChanged(args);
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
             }
         }
     }

@@ -1080,7 +1080,7 @@ namespace GridBlazor
                         urlParameters = urlParameters.Replace("?", "&");
                     response = await HttpClient.GetFromJsonAsync<ItemsDTO<T>>(Url + urlParameters);       
                 }
-                if (response != null && response.Items != null && response.Pager != null)
+                if (response?.Items != null && response?.Pager != null)
                 {
                     Items = response.Items;
                     OriginalItems = response.OriginalItems;

@@ -106,7 +106,10 @@ namespace GridBlazor.Pages
 
         public List<int> SelectedRows { get; internal set; } = new List<int>();
 
-        public QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>> CheckboxesKeyed { get; private set; } = new QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>>();
+        /// <summary>
+        /// Always has a value when it's a checkbox column
+        /// </summary>
+        public QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>> CheckboxesKeyed { get; private set; }
 
         public QueryDictionary<GridHeaderComponent<T>> HeaderComponents { get; private set; }
 
@@ -1566,7 +1569,7 @@ namespace GridBlazor.Pages
         {
             if (HeaderCheckboxChanged != null)
             {
-                await HeaderCheckboxChanged.Invoke(args);
+                await HeaderCheckboxChanged?.Invoke(args);
             }
         }
 
@@ -1575,6 +1578,26 @@ namespace GridBlazor.Pages
             if (RowCheckboxChanged != null)
             {
                 await RowCheckboxChanged.Invoke(args);
+            }
+        }
+
+        /// <param name="columnName"></param>
+        /// <returns>
+        /// Null if column does not exist, else number of checked rows
+        /// </returns>
+        public int? CheckedBoxesCount(string columnName)
+        {
+            var column = Grid.Columns.FirstOrDefault(i => i.Name == columnName);
+            var header = HeaderComponents.Get(columnName);
+            var checkboxes = CheckboxesKeyed.Get(columnName);
+            if (column == null || checkboxes == null || header == null) return null;
+            if (column.HeaderCheckbox && header.IsChecked() != null)
+            {
+                return header.IsChecked() == true ? Grid.ItemsCount : 0;
+            }
+            else
+            {
+                return checkboxes.Count(i => i.Value.Item2);
             }
         }
 

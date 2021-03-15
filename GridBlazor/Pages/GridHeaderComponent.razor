@@ -8,7 +8,7 @@
         @if (Column.HeaderCheckbox)
         {
             <div class="grid-header-checkbox">
-                @if (_allChecked == null || _showAllChecked == false)
+                @if (_allChecked == null)
                 {
                     <input class="grid-header-checkbox-input" type='checkbox' @onchange="CheckboxChangeHandler" @onclick:stopPropagation>
                     <span class="null-checkbox"></span>
@@ -21,7 +21,7 @@
         }
         @if (Column.ParentGrid.ExtSortingEnabled)
         {
-            <div class="grid-extsort-draggable @_cssSortingClass" draggable="true" data-column="@Column.Name" @ondragstart="() => HandleDragStart()" @onmouseover="DisplayTooltip" @onmouseout="HideTooltip">
+            <div class="grid-extsort-draggable @_cssSortingClass" draggable="true" data-column="@Column.Name" @ondragstart="HandleDragStart" @onmouseover="DisplayTooltip" @onmouseout="HideTooltip">
                 @if (Column.SortEnabled)
                 {
                     if (Column.IsSorted)
