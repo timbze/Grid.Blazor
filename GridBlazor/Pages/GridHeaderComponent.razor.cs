@@ -38,7 +38,7 @@ namespace GridBlazor.Pages
         /// This keeps track of which value the header checkbox has had last.
         ///  It is so that unspecified checkboxes on a different grid page know if they should be true or false.
         /// </summary>
-        internal bool LastHeaderCheckedValue { get; private set; }
+        internal bool LastHeaderCheckedValue { get; set; }
 
         protected string _cssStyles;
         protected string _cssClass;

@@ -285,9 +285,14 @@ namespace GridBlazor.Pages
             }
         }
 
-        internal void InitCheckedKeys()
+        internal async Task InitCheckedKeys()
         {
             CheckboxesKeyed = new QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>>();
+            if (HeaderComponents != null)
+                foreach (var h in HeaderComponents.Where(i => i.Value.IsChecked() != false))
+                {
+                    await h.Value.SetChecked(false);
+                }
         }
 
         protected override bool ShouldRender()
@@ -295,10 +300,10 @@ namespace GridBlazor.Pages
             return _shouldRender;
         }
 
-        protected override Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
         {
-            InitCheckedKeys();
-            return base.OnInitializedAsync();
+            await InitCheckedKeys();
+            await base.OnInitializedAsync();
         }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)

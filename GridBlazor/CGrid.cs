@@ -157,7 +157,7 @@ namespace GridBlazor
             set
             {
                 if (_gridComponent == null)
-                    value.InitCheckedKeys();
+                    value.InitCheckedKeys().Wait();
                 _gridComponent = value;
             }
         }
