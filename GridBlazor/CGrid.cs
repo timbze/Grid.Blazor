@@ -179,7 +179,7 @@ namespace GridBlazor
 
         public bool GroupingEnabled { get; set; }
 
-        public bool ClearFiltersButtonEnabled { get; set; } = false;
+        public bool ClearFiltersButtonEnabled { get; set; } = true;
 
         /// <summary>
         ///     Items, displaying in the grid view
