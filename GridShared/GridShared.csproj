@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>4.1.5-timmy</Version>
+    <Version>15.2021.316</Version>
     <Title>GridShared</Title>
     <Description>Support library for GridBlazor and GridMvcCore component libraries</Description>
     <Summary>Support library for GridBlazor and GridMvcCore component libraries</Summary>
