@@ -1569,7 +1569,7 @@ namespace GridBlazor.Pages
         {
             if (HeaderCheckboxChanged != null)
             {
-                await HeaderCheckboxChanged?.Invoke(args);
+                await HeaderCheckboxChanged.Invoke(args);
             }
         }
 

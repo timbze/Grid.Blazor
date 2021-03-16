@@ -299,7 +299,7 @@ namespace GridBlazor.Pages
                     ColumnName = Column.Name,
                     Value = _allChecked == true ? CheckboxValue.Checked : CheckboxValue.Unchecked,
                     HeaderValue = _allChecked == null ? CheckboxValue.Gray : (_allChecked == true ? CheckboxValue.Checked : CheckboxValue.Unchecked),
-                    RowId = e.RowId,
+                    StringKey = e.StringKey,
                 };
                 await GridComponent.OnHeaderCheckboxChanged(args);
                 await InvokeAsync(StateHasChanged);

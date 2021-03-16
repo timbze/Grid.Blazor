@@ -9,7 +9,7 @@ namespace GridShared.Events
         public CheckboxValue Value { get; set; }
         public CheckboxValue HeaderValue { get; set; }
         public T Item { get; set; }
-        public int RowId { get; set; }
+        public string StringKey { get; set; }
         public bool SingleCheckboxMode { get; set; }
     }
 }
