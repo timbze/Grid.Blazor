@@ -1,9 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net5.0</TargetFrameworks>
-    <RazorLangVersion>3.0</RazorLangVersion>
-    <LangVersion>8.0</LangVersion>
+    <TargetFramework>net5.0</TargetFramework>
     <GenerateEmbeddedFilesManifest>True</GenerateEmbeddedFilesManifest>
     <EnableDefaultEmbeddedResourceItems>False</EnableDefaultEmbeddedResourceItems>
     <Version>2.1.12-timmy</Version>
@@ -25,16 +23,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'">
-    <PackageReference Include="Microsoft.AspNetCore.Components" Version="5.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="5.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0" />
     <PackageReference Include="Microsoft.Extensions.Primitives" Version="5.0" />
     <PackageReference Include="System.Net.Http.Json" Version="5.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="Microsoft.AspNetCore.Components" Version="3.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="3.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1" />
     <PackageReference Include="Microsoft.Extensions.Primitives" Version="3.1" />
     <PackageReference Include="System.Net.Http.Json" Version="3.2" />
@@ -42,7 +36,9 @@
 
   <ItemGroup>
     <PackageReference Include="Agno.BlazorInputFile" Version="0.3.0" />
-    <PackageReference Include="DocumentFormat.OpenXml" Version="2.11" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="2.12.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="5.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="5.0.4" />
   </ItemGroup>
   
   <ItemGroup>
