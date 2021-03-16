@@ -45,7 +45,8 @@ namespace GridShared
         bool GroupingEnabled { get; set; }
 
         /// <summary>
-        ///     Set or get visibility of ClearFiltersButton 
+        /// Set or get visibility of ClearFiltersButton.
+        ///  It will only be displayed when there is at least 1 active filter. 
         /// </summary>
         bool ClearFiltersButtonEnabled { get; set; }
 

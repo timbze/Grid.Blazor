@@ -593,14 +593,20 @@ namespace GridBlazor.Pages
             }
         }
 
-        public async Task RemoveAllFilters()
+        public async Task RemoveAllFilters() =>
+            await RemoveAllFilters(true, true);
+
+        private async Task RemoveAllFilters(bool runEvents, bool updateGrid)
         {
-            bool isValid = await OnBeforeFilterChanged();
+            bool isValid = !runEvents || await OnBeforeFilterChanged();
             if (isValid)
             {
                 Grid.RemoveAllFilters();
-                await UpdateGrid();
-                await OnFilterChanged();
+                if (updateGrid)
+                    await UpdateGrid();
+
+                if (runEvents)
+                    await OnFilterChanged();
             }
         }
 
@@ -613,9 +619,6 @@ namespace GridBlazor.Pages
 
         protected virtual async Task OnSearchChanged()
         {
-            // Filter changes must not init checked keys
-            //InitCheckedKeys();
-
             SearchEventArgs args = new SearchEventArgs();
             args.SearchValue = Grid.Settings.SearchSettings.SearchValue;
             
@@ -625,10 +628,24 @@ namespace GridBlazor.Pages
             }
         }
 
-        public async Task RemoveSearch()
+        public async Task RemoveSearch() =>
+            await RemoveSearch(true, true);
+
+        private async Task RemoveSearch(bool runEvents, bool updateGrid)
         {
             Grid.RemoveQueryParameter(QueryStringSearchSettings.DefaultSearchQueryParameter);
+            if (updateGrid)
+                await UpdateGrid();
+            if (runEvents)
+                await OnSearchChanged();
+        }
+
+        public async Task RemoveSearchAndFilters()
+        {
+            await RemoveAllFilters(false, false);
+            await RemoveSearch(false, false);
             await UpdateGrid();
+            await OnFilterChanged();
             await OnSearchChanged();
         }
 
