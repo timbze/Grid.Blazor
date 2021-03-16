@@ -285,7 +285,7 @@ namespace GridBlazor.Pages
             }
         }
 
-        internal async Task InitCheckedKeys()
+        internal async Task ResetOnNewGridComponent()
         {
             CheckboxesKeyed = new QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>>();
             if (HeaderComponents != null)
@@ -302,7 +302,7 @@ namespace GridBlazor.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            await InitCheckedKeys();
+            await ResetOnNewGridComponent();
             await base.OnInitializedAsync();
         }
 

@@ -289,11 +289,11 @@ namespace GridBlazor.Pages
             var oldValue = _allChecked;
 
             var checkedCount = GridComponent.CheckboxesKeyed.Get(Column.Name).Values.Count(r => r.Item2);
-            if (checkedCount > 0 && checkedCount != GridComponent.Grid.ItemsCount)
+            if (checkedCount > 0 && checkedCount != GridComponent.Grid.Pager.OriginalItemsCount)
                 _allChecked = null;
             else
             {
-                _allChecked = checkedCount == GridComponent.Grid.ItemsCount;
+                _allChecked = checkedCount == GridComponent.Grid.Pager.OriginalItemsCount;
                 LastHeaderCheckedValue = _allChecked == true;
                 GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
             }

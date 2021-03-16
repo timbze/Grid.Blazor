@@ -23,6 +23,10 @@
         int CurrentPage { get; }
 
         int ItemsCount { get; set; }
+        /// <summary>
+        /// This does not reset with filtering, etc. Only a complete new call to grid resets this
+        /// </summary>
+        int? OriginalItemsCount { get; set; }
 
         ///// <summary>
         /////     Total pages count

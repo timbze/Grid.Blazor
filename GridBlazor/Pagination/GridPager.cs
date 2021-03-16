@@ -123,6 +123,8 @@ namespace GridBlazor.Pagination
             }
         }
 
+        public int? OriginalItemsCount { get; set; }
+
         public int MaxDisplayedPages
         {
             get { return _maxDisplayedPages == 0 ? DefaultMaxDisplayedPages : _maxDisplayedPages; }

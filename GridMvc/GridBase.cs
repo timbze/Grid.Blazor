@@ -74,7 +74,6 @@ namespace GridMvc
         {
             get
             {
-                //call preprocessors before:
                 PreProcess();
 
                 return _itemsCount;

@@ -157,7 +157,7 @@ namespace GridBlazor
             set
             {
                 if (_gridComponent == null)
-                    value.InitCheckedKeys().Wait();
+                    value.ResetOnNewGridComponent().Wait();
                 _gridComponent = value;
             }
         }
@@ -165,7 +165,9 @@ namespace GridBlazor
         /// <summary>
         /// Total count of items in the grid
         /// </summary>
-        public int ItemsCount { get { return _pager.ItemsCount; } }
+        public int ItemsCount => _pager.ItemsCount;
+
+        public int? OriginalItemsCount => _pager.OriginalItemsCount;
 
         public bool SearchingEnabled { get; set; }
 
@@ -1090,6 +1092,7 @@ namespace GridBlazor
                     AddQueryParameter(((GridPager)Pager).ParameterName, response.Pager.CurrentPage.ToString());
                     ((GridPager)_pager).PageSize = response.Pager.PageSize;
                     ((GridPager)_pager).ItemsCount = response.Pager.ItemsCount;
+                    ((GridPager)_pager).OriginalItemsCount ??= ((GridPager) _pager).ItemsCount;
 
                     if (response.Totals != null)
                     {
@@ -1178,6 +1181,7 @@ namespace GridBlazor
                     return;
                 }
                 ((GridPager)_pager).ItemsCount = response.ItemsCount;
+                ((GridPager)_pager).OriginalItemsCount ??= ((GridPager)_pager).ItemsCount;
 
                 // Processor parameters (paging and sorting)
                 string processorParameters = "";
@@ -1219,7 +1223,7 @@ namespace GridBlazor
                 }
                 Items = response.Value;
                 ((GridPager)_pager).ItemsCount = response.ItemsCount;
-
+                ((GridPager)_pager).OriginalItemsCount ??= ((GridPager)_pager).ItemsCount;
             }
             catch (Exception e)
             {
