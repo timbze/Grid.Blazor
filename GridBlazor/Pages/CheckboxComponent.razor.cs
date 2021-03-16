@@ -35,17 +35,7 @@ namespace GridBlazor.Pages
             if (GridComponent.CheckboxesKeyed.Get(_columnName) == null)
                 GridComponent.CheckboxesKeyed.Add(_columnName, new QueryDictionary<(CheckboxComponent<T>, bool)>());
 
-            // init value when header checkbox is enabled and is not null
-            var header = GridComponent.HeaderComponents.Get(_columnName);
-            var exceptCheckedRows = GridComponent.CheckboxesKeyed.Get(_columnName);
-            string stringKeys = GetStringKeys();
-
-            if (!string.IsNullOrWhiteSpace(stringKeys) && exceptCheckedRows?.ContainsKey(stringKeys) == true)
-                _value = exceptCheckedRows.Get(stringKeys).Item2;
-            else if (header?.Column.HeaderCheckbox == true && header.IsChecked() != null)
-                _value = header.IsChecked() == true;
-            else
-                _value = false;
+            _value = CalculateIsChecked();
         }
 
         private bool _initComplete;
@@ -97,7 +87,7 @@ namespace GridBlazor.Pages
                 await InvokeAsync(StateHasChanged);
         }
 
-        private async Task HeaderCheckboxChanged(CheckboxEventArgs<T> e)
+        private async Task HeaderCheckboxChanged(HeaderCheckboxEventArgs<T> e)
         {
             if (e.ColumnName != _columnName || _readonly) return;
             if (e.StringKey != GetStringKeys())
@@ -105,6 +95,22 @@ namespace GridBlazor.Pages
                 var updateValue = e.HeaderValue == CheckboxValue.Checked || (e.HeaderValue == CheckboxValue.Unchecked ? false : _value);
                 await SetChecked(updateValue, false);
             }
+        }
+
+        private bool CalculateIsChecked()
+        {
+            var header = GridComponent.HeaderComponents.Get(_columnName);
+            var exceptCheckedRows = GridComponent.CheckboxesKeyed.Get(_columnName);
+            string stringKeys = GetStringKeys();
+            if (string.IsNullOrWhiteSpace(stringKeys)) return false;
+
+            var outValue = false;
+            if (exceptCheckedRows?.ContainsKey(stringKeys) == true)
+                outValue = exceptCheckedRows.Get(stringKeys).Item2;
+            else if (header?.Column.HeaderCheckbox == true)
+                outValue = (header.IsChecked() == null && header.LastHeaderCheckedValue) || header.IsChecked() == true;
+            
+            return outValue;
         }
 
         public bool IsChecked()
@@ -124,6 +130,7 @@ namespace GridBlazor.Pages
             var header = GridComponent.HeaderComponents.Get(_columnName);
             var checkboxesKeyed = GridComponent.CheckboxesKeyed.Get(_columnName);
             string stringKeys = GetStringKeys();
+            if (string.IsNullOrWhiteSpace(stringKeys)) return;
 
             var args = new CheckboxEventArgs<T>();
             if (header?.Column?.SingleCheckbox == true)
@@ -137,13 +144,10 @@ namespace GridBlazor.Pages
             }
             else
             {
-                if (checkboxesKeyed != null && !string.IsNullOrWhiteSpace(stringKeys))
-                {
-                    if (checkboxesKeyed.ContainsKey(stringKeys))
-                        checkboxesKeyed[stringKeys] = (this, value);
-                    else
-                        checkboxesKeyed.Add(stringKeys, (this, value));
-                }
+                if (checkboxesKeyed.ContainsKey(stringKeys))
+                    checkboxesKeyed[stringKeys] = (this, value);
+                else
+                    checkboxesKeyed.Add(stringKeys, (this, value));
 
                 args.ColumnName = _columnName;
                 args.Item = Item;

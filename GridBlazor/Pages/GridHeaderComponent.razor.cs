@@ -34,6 +34,12 @@ namespace GridBlazor.Pages
         protected StringValues _clearInitFilter;
         private bool? _allChecked = false;
 
+        /// <summary>
+        /// This keeps track of which value the header checkbox has had last.
+        ///  It is so that unspecified checkboxes on a different grid page know if they should be true or false.
+        /// </summary>
+        internal bool LastHeaderCheckedValue { get; private set; }
+
         protected string _cssStyles;
         protected string _cssClass;
         protected string _cssFilterClass;
@@ -268,14 +274,13 @@ namespace GridBlazor.Pages
         }
 
         protected async Task CheckboxChangeHandler()
-        {        
-            if (Column.HeaderCheckbox)
-            {
-                if(_allChecked != null)
-                    await SetChecked(_allChecked != true);
-                else
-                    await SetChecked(true);
-            }
+        {
+            if (!Column.HeaderCheckbox) return;
+            
+            var updateValue = _allChecked != true;
+
+            LastHeaderCheckedValue = updateValue;
+            await SetChecked(updateValue);
         }
 
         private async Task RowCheckboxChanged(CheckboxEventArgs<T> e)
@@ -289,12 +294,13 @@ namespace GridBlazor.Pages
             else
             {
                 _allChecked = checkedCount == GridComponent.Grid.ItemsCount;
+                LastHeaderCheckedValue = _allChecked == true;
                 GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
             }
 
             if (_allChecked != oldValue)
             {
-                CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
+                var args = new HeaderCheckboxEventArgs<T>
                 {
                     ColumnName = Column.Name,
                     Value = _allChecked == true ? CheckboxValue.Checked : CheckboxValue.Unchecked,
@@ -323,7 +329,7 @@ namespace GridBlazor.Pages
             _allChecked = value;
             GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
 
-            CheckboxEventArgs<T> args = new CheckboxEventArgs<T>
+            var args = new HeaderCheckboxEventArgs<T>
             {
                 ColumnName = Column.Name, 
                 Value = value ? CheckboxValue.Checked : CheckboxValue.Unchecked,

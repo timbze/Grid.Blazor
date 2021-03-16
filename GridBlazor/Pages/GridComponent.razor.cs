@@ -94,7 +94,7 @@ namespace GridBlazor.Pages
         /// </summary>
         public event Func<Task> AfterUpdateGrid;
 
-        public event Func<CheckboxEventArgs<T>, Task> HeaderCheckboxChanged;
+        public event Func<HeaderCheckboxEventArgs<T>, Task> HeaderCheckboxChanged;
         public event Func<CheckboxEventArgs<T>, Task> RowCheckboxChanged;
 
         internal event Action FilterButtonClicked;
@@ -1565,7 +1565,7 @@ namespace GridBlazor.Pages
             }
         }
 
-        internal virtual async Task OnHeaderCheckboxChanged(CheckboxEventArgs<T> args)
+        internal virtual async Task OnHeaderCheckboxChanged(HeaderCheckboxEventArgs<T> args)
         {
             if (HeaderCheckboxChanged != null)
             {
@@ -1581,7 +1581,6 @@ namespace GridBlazor.Pages
             }
         }
 
-        /// <param name="columnName"></param>
         /// <returns>
         /// Null if column does not exist, else number of checked rows
         /// </returns>
@@ -1597,7 +1596,11 @@ namespace GridBlazor.Pages
             }
             else
             {
-                return checkboxes.Count(i => i.Value.Item2);
+                var rowCount = Grid.ItemsCount;
+                var checkedCount = checkboxes.Count(i => i.Value.Item2);
+                var uncheckedCount = checkboxes.Count(i => !i.Value.Item2);
+                var unspecified = rowCount - checkedCount - uncheckedCount;
+                return checkedCount + (header.LastHeaderCheckedValue ? unspecified : 0);
             }
         }
 
