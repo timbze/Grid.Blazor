@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <GenerateEmbeddedFilesManifest>True</GenerateEmbeddedFilesManifest>
     <EnableDefaultEmbeddedResourceItems>False</EnableDefaultEmbeddedResourceItems>
-    <Version>15.2021.316.2</Version>
+    <Version>15.2021.320</Version>
     <Title>GridBlazor</Title>
     <Description>Grid components for Blazor</Description>
     <Summary>Grid components for Blazor</Summary>
