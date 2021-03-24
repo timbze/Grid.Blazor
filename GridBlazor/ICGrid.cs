@@ -318,5 +318,7 @@ namespace GridBlazor
         ///     Go to Edit form after insert row
         /// </summary>
         bool EditAfterInsert { get; set; }
+
+        int? OriginalItemsCount { get; }
     }
 }

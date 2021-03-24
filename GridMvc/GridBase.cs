@@ -68,7 +68,7 @@ namespace GridMvc
         public string EmptyGridText { get; set; }
 
         /// <summary>
-        /// Total count of items in the grid
+        /// Total count of items in the grid (after filtering etc)
         /// </summary>
         public int ItemsCount
         {
@@ -78,10 +78,8 @@ namespace GridMvc
 
                 return _itemsCount;
             }
-            set
-            {
+            set => 
                 _itemsCount = value; //value can be set by pager (for minimizing db calls)
-            }
         }
 
         #region Custom row css classes

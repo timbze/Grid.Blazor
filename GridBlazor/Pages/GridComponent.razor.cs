@@ -1614,11 +1614,11 @@ namespace GridBlazor.Pages
             if (column == null || checkboxes == null || header == null) return null;
             if (column.HeaderCheckbox && header.IsChecked() != null)
             {
-                return header.IsChecked() == true ? Grid.ItemsCount : 0;
+                return header.IsChecked() == true ? Grid.OriginalItemsCount : 0;
             }
             else
             {
-                var rowCount = Grid.ItemsCount;
+                var rowCount = Grid.OriginalItemsCount;
                 var checkedCount = checkboxes.Count(i => i.Value.Item2);
                 var uncheckedCount = checkboxes.Count(i => !i.Value.Item2);
                 var unspecified = rowCount - checkedCount - uncheckedCount;
