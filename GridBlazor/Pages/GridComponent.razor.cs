@@ -18,6 +18,7 @@ using System.Linq;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace GridBlazor.Pages
 {
@@ -99,8 +100,8 @@ namespace GridBlazor.Pages
 
         internal event Action FilterButtonClicked;
 
-        [Inject]
-        private IJSRuntime jSRuntime { get; set; }
+        [Inject] private IJSRuntime JsRuntime { get; set; }
+        [Inject] private ILogger<GridComponent<T>> Logger { get; set; }
 
         public int SelectedRow { get; internal set; } = -1;
 
@@ -287,6 +288,7 @@ namespace GridBlazor.Pages
 
         internal async Task ResetOnNewGridComponent()
         {
+            Logger.LogDebug("ResetOnNewGridComponent");
             CheckboxesKeyed = new QueryDictionary<QueryDictionary<(CheckboxComponent<T>, bool)>>();
             if (HeaderComponents != null)
                 foreach (var h in HeaderComponents.Where(i => i.Value.IsChecked() != false))
@@ -310,11 +312,11 @@ namespace GridBlazor.Pages
         {
             if (firstRender)
             {
-                IsDateTimeLocalSupported = await jSRuntime.InvokeAsync<bool>("gridJsFunctions.isDateTimeLocalSupported");
-                IsWeekSupported = await jSRuntime.InvokeAsync<bool>("gridJsFunctions.isWeekSupported");
-                IsMonthSupported = await jSRuntime.InvokeAsync<bool>("gridJsFunctions.isMonthSupported");
+                IsDateTimeLocalSupported = await JsRuntime.InvokeAsync<bool>("gridJsFunctions.isDateTimeLocalSupported");
+                IsWeekSupported = await JsRuntime.InvokeAsync<bool>("gridJsFunctions.isWeekSupported");
+                IsMonthSupported = await JsRuntime.InvokeAsync<bool>("gridJsFunctions.isMonthSupported");
                 if (Grid.TableLayout != TableLayout.Auto)
-                    await jSRuntime.InvokeVoidAsync("gridJsFunctions.scrollFixedSizeTable", gridTableHead, gridTableBody);
+                    await JsRuntime.InvokeVoidAsync("gridJsFunctions.scrollFixedSizeTable", gridTableHead, gridTableBody);
             }
             
             if ((firstRender || _fromCrud) && Gridmvc.Id != null && Grid.Keyboard)
@@ -956,9 +958,9 @@ namespace GridBlazor.Pages
         public async Task ExcelHandler()
         {
             if(string.IsNullOrWhiteSpace(Grid.ExcelExportFileName))
-                await Grid.DownloadExcel(jSRuntime, Grid.ComponentOptions.GridName + ".xlsx");
+                await Grid.DownloadExcel(JsRuntime, Grid.ComponentOptions.GridName + ".xlsx");
             else
-                await Grid.DownloadExcel(jSRuntime, Grid.ExcelExportFileName + ".xlsx");
+                await Grid.DownloadExcel(JsRuntime, Grid.ExcelExportFileName + ".xlsx");
         }
 
         public void ButtonComponentHandler(string key)
@@ -1469,19 +1471,19 @@ namespace GridBlazor.Pages
 
         public async Task SetFocus(ElementReference element)
         {
-            await jSRuntime.InvokeVoidAsync("gridJsFunctions.focusElement", element);
+            await JsRuntime.InvokeVoidAsync("gridJsFunctions.focusElement", element);
         }
 
         public async Task ShowSpinner()
         {
-            await jSRuntime.InvokeVoidAsync("gridJsFunctions.hideElement", Content);
-            await jSRuntime.InvokeVoidAsync("gridJsFunctions.showElement", Spinner);
+            await JsRuntime.InvokeVoidAsync("gridJsFunctions.hideElement", Content);
+            await JsRuntime.InvokeVoidAsync("gridJsFunctions.showElement", Spinner);
         }
 
         public async Task HideSpinner()
         {
-            await jSRuntime.InvokeVoidAsync("gridJsFunctions.hideElement", Spinner);
-            await jSRuntime.InvokeVoidAsync("gridJsFunctions.showElement", Content);
+            await JsRuntime.InvokeVoidAsync("gridJsFunctions.hideElement", Spinner);
+            await JsRuntime.InvokeVoidAsync("gridJsFunctions.showElement", Content);
         }
 
         public void ShowCrudButtons()
