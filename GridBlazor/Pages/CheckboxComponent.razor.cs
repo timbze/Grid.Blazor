@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace GridBlazor.Pages
 {
-    public partial class CheckboxComponent<T> : ICustomGridComponent<T>
+    public partial class CheckboxComponent<T> : ICustomGridComponent<T>, IDisposable
     {
         private Func<T, bool> _expr;
         private Func<T, bool> _readonlyExpr;
@@ -165,9 +165,15 @@ namespace GridBlazor.Pages
         private string GetStringKeys()
         {
             return GridComponent.Grid.GetRowStringKeys(Item);
-            var keys = GridComponent.Grid.GetPrimaryKeyValues(Item);
-            return string.Join('_', keys);
         }
 
+        public void Dispose()
+        {
+            GridComponent.HeaderCheckboxChanged -= HeaderCheckboxChanged;
+                
+            var header = GridComponent.HeaderComponents.Get(_columnName);
+            if (header?.Column?.SingleCheckbox == true)
+                GridComponent.RowCheckboxChanged -= SingleCheckboxModeCheckboxChanged;
+        }
     }
 }

@@ -276,11 +276,7 @@ namespace GridBlazor.Pages
         protected async Task CheckboxChangeHandler()
         {
             if (!Column.HeaderCheckbox) return;
-            
-            var updateValue = _allChecked != true;
-
-            LastHeaderCheckedValue = updateValue;
-            await SetChecked(updateValue);
+            await SetChecked(_allChecked != true);
         }
 
         private async Task RowCheckboxChanged(CheckboxEventArgs<T> e)
@@ -327,7 +323,12 @@ namespace GridBlazor.Pages
             var oldValue = _allChecked;
             
             _allChecked = value;
-            GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
+            var allItemsDisplayed = GridComponent.Grid.ItemsCount == GridComponent.Grid.OriginalItemsCount;
+            if (allItemsDisplayed)
+            {
+                GridComponent.CheckboxesKeyed.AddParameter(Column.Name, new QueryDictionary<(CheckboxComponent<T>, bool)>());
+                LastHeaderCheckedValue = value;
+            }
 
             var args = new HeaderCheckboxEventArgs<T>
             {

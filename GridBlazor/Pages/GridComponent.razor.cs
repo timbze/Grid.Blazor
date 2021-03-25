@@ -1624,7 +1624,7 @@ namespace GridBlazor.Pages
         /// <returns>
         /// Null if column does not exist, else number of checked rows
         /// </returns>
-        public int? CheckedBoxesCount(string columnName)
+        public int? GetCheckedItemsCount(string columnName)
         {
             var column = Grid.Columns.FirstOrDefault(i => i.Name == columnName);
             var header = HeaderComponents.Get(columnName);
@@ -1649,9 +1649,9 @@ namespace GridBlazor.Pages
         /// </summary>
         /// <param name="columnName"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<T>> GetCheckedItems(string columnName)
+        public IEnumerable<T> GetCheckedItems(string columnName)
         {
-            await RemoveSearchAndFilters();
+            RemoveSearchAndFilters().Wait();
             return GetCheckedItemsData(columnName);
         }
 
@@ -1663,7 +1663,7 @@ namespace GridBlazor.Pages
             var lastChecked = header.LastHeaderCheckedValue;
             var uncheckedValues = CheckboxesKeyed[columnName].Where(cv => !cv.Value.Item2)
                 .ToDictionary(d => d.Key, d => d.Value);
-            foreach (var item in ((CGrid<T>)Grid).Items)
+            foreach (var item in ((CGrid<T>)Grid).OriginalItems)
             {
                 if (!lastChecked)
                 {
