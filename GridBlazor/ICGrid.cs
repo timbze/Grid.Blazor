@@ -75,7 +75,8 @@ namespace GridBlazor
 
         void AddQueryParameter(string parameterName, StringValues parameterValue);
 
-        void RemoveQueryParameter(string parameterName);
+        /// <returns>True when filter exists and is removed, else false</returns>
+        bool RemoveQueryParameter(string parameterName);
 
         void AddQueryString(string parameterName, string parameterValue);
 
@@ -87,7 +88,8 @@ namespace GridBlazor
 
         void RemoveFilterParameter(IGridColumn column);
 
-        void RemoveAllFilters();
+        /// <returns>True when any filter has been removed</returns>
+        bool RemoveAllFilters();
 
         Task DownloadExcel(IJSRuntime js, string filename);
 

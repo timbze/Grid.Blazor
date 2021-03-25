@@ -829,7 +829,7 @@ namespace GridBlazor
             UpdateQueryAndSettings();
         }
 
-        public void RemoveQueryParameter(string parameterName)
+        public bool RemoveQueryParameter(string parameterName)
         {
             if (string.IsNullOrEmpty(parameterName))
                 throw new ArgumentException("parameterName");
@@ -838,7 +838,10 @@ namespace GridBlazor
             {
                 _query.Remove(parameterName);
                 UpdateQueryAndSettings();
+                return true;
             }
+
+            return false;
         }
 
         public void AddQueryString(string parameterName, string parameterValue)
@@ -991,10 +994,11 @@ namespace GridBlazor
             UpdateQueryAndSettings();
         }
 
-        public void RemoveAllFilters()
+        public bool RemoveAllFilters()
         {
-            RemoveQueryParameter(QueryStringFilterSettings.DefaultClearInitFilterQueryParameter);
-            RemoveQueryParameter(QueryStringFilterSettings.DefaultTypeQueryParameter);
+            var output = RemoveQueryParameter(QueryStringFilterSettings.DefaultClearInitFilterQueryParameter);
+            output = RemoveQueryParameter(QueryStringFilterSettings.DefaultTypeQueryParameter) || output;
+            return output;
         }
 
         public string GetState()

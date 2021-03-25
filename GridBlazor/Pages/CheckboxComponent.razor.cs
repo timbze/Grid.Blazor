@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GridBlazor.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace GridBlazor.Pages
@@ -163,6 +164,7 @@ namespace GridBlazor.Pages
 
         private string GetStringKeys()
         {
+            return GridComponent.Grid.GetRowStringKeys(Item);
             var keys = GridComponent.Grid.GetPrimaryKeyValues(Item);
             return string.Join('_', keys);
         }

@@ -18,6 +18,7 @@ using System.Linq;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using GridBlazor.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace GridBlazor.Pages
@@ -595,21 +596,26 @@ namespace GridBlazor.Pages
             }
         }
 
-        public async Task RemoveAllFilters() =>
+        /// <returns>True when any filters have been removed</returns>
+        public async Task<bool> RemoveAllFilters() =>
             await RemoveAllFilters(true, true);
-
-        private async Task RemoveAllFilters(bool runEvents, bool updateGrid)
+        
+        /// <returns>True when any filters have been removed</returns>
+        private async Task<bool> RemoveAllFilters(bool runEvents, bool updateGrid)
         {
             bool isValid = !runEvents || await OnBeforeFilterChanged();
+            bool filtersRemoved = false;
             if (isValid)
             {
-                Grid.RemoveAllFilters();
-                if (updateGrid)
+                filtersRemoved = Grid.RemoveAllFilters();
+                if (filtersRemoved && updateGrid)
                     await UpdateGrid();
 
-                if (runEvents)
+                if (filtersRemoved && runEvents)
                     await OnFilterChanged();
             }
+
+            return filtersRemoved;
         }
 
         public async Task AddSearch(string searchValue)
@@ -630,25 +636,35 @@ namespace GridBlazor.Pages
             }
         }
 
-        public async Task RemoveSearch() =>
+        /// <returns>True when search has been removed</returns>
+        public async Task<bool> RemoveSearch() =>
             await RemoveSearch(true, true);
 
-        private async Task RemoveSearch(bool runEvents, bool updateGrid)
+        private async Task<bool> RemoveSearch(bool runEvents, bool updateGrid)
         {
-            Grid.RemoveQueryParameter(QueryStringSearchSettings.DefaultSearchQueryParameter);
-            if (updateGrid)
+            var searchRemoved = Grid.RemoveQueryParameter(QueryStringSearchSettings.DefaultSearchQueryParameter);
+            if (searchRemoved && updateGrid)
                 await UpdateGrid();
-            if (runEvents)
+            if (searchRemoved && runEvents)
                 await OnSearchChanged();
+
+            return searchRemoved;
         }
 
-        public async Task RemoveSearchAndFilters()
+        /// <returns>True when search or filters have been removed</returns>
+        public async Task<bool> RemoveSearchAndFilters()
         {
-            await RemoveAllFilters(false, false);
-            await RemoveSearch(false, false);
-            await UpdateGrid();
-            await OnFilterChanged();
-            await OnSearchChanged();
+            var filtersRemoved = await RemoveAllFilters(false, false);
+            var searchRemoved = await RemoveSearch(false, false);
+            if (filtersRemoved || searchRemoved)
+            {
+                await UpdateGrid();
+                await OnFilterChanged();
+                await OnSearchChanged();
+                return true;
+            }
+
+            return false;
         }
 
         public async Task AddExtSorting()
@@ -1625,6 +1641,42 @@ namespace GridBlazor.Pages
                 var uncheckedCount = checkboxes.Count(i => !i.Value.Item2);
                 var unspecified = rowCount - checkedCount - uncheckedCount;
                 return checkedCount + (header.LastHeaderCheckedValue ? unspecified : 0);
+            }
+        }
+
+        /// <summary>
+        /// Calling this method will remove search and filters from Grid
+        /// </summary>
+        /// <param name="columnName"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<T>> GetCheckedItems(string columnName)
+        {
+            await RemoveSearchAndFilters();
+            return GetCheckedItemsData(columnName);
+        }
+
+        private IEnumerable<T> GetCheckedItemsData(string columnName)
+        {
+            var header = HeaderComponents.Get(columnName);
+            var checkedValues = CheckboxesKeyed[columnName].Where(cv => cv.Value.Item2)
+                .ToDictionary(d => d.Key, d => d.Value);
+            var lastChecked = header.LastHeaderCheckedValue;
+            var uncheckedValues = CheckboxesKeyed[columnName].Where(cv => !cv.Value.Item2)
+                .ToDictionary(d => d.Key, d => d.Value);
+            foreach (var item in ((CGrid<T>)Grid).Items)
+            {
+                if (!lastChecked)
+                {
+                    if (checkedValues.ContainsKey(Grid.GetRowStringKeys(item)))
+                        yield return item;
+                    continue;
+                }
+                
+                // lastChecked is true, that means all items are true unless explicitly set to false
+                
+                if (uncheckedValues.ContainsKey(Grid.GetRowStringKeys(item))) continue;
+
+                yield return item;
             }
         }
 

@@ -14,7 +14,7 @@ namespace GridShared
         IGridColumnCollection Columns { get; }
 
         /// <summary>
-        ///     Grid items
+        ///     Grid items to display on current grid page
         /// </summary>
         IEnumerable<object> ItemsToDisplay { get; }
         
